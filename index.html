@@ -413,9 +413,13 @@ async function fetchGist() {
     const r = await fetch(GIST_URL, {cache:'no-store'});
     const g = await r.json();
     const files = g.files || {};
-    const key   = Object.keys(files)[0];
+    // Prefer ptbot_tunnel.json, fallback to first file
+    const key = files["ptbot_tunnel.json"] ? "ptbot_tunnel.json" : Object.keys(files)[0];
     if (key) {
-      const url = files[key].content.trim();
+      let raw = files[key].content.trim();
+      // Handle JSON format {"url": "..."}
+      let url = raw;
+      try { const parsed = JSON.parse(raw); url = parsed.url || raw; } catch(e) {}
       if (url && url !== tunnelUrl) {
         tunnelUrl = url;
         localStorage.setItem('ptbot_tunnel', url);
