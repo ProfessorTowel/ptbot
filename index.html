@@ -1,1 +1,642 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/><meta name="theme-color" content="#080d14"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><title>ProfTowel Bot</title><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#080d14;color:#c8d8e8;font-family:Inter,sans-serif;-webkit-font-smoothing:antialiased}#root{min-height:100vh}</style><script defer="defer" src="./static/js/main.932ad207.js"></script></head><body><noscript>JavaScript is required.</noscript><div id="root"></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProfTowel Bot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg:       #080c12;
+    --surface:  #0d1520;
+    --border:   #1a2535;
+    --green:    #00ff9d;
+    --red:      #ff2d55;
+    --yellow:   #ffd60a;
+    --blue:     #4cc9f0;
+    --purple:   #9b5de5;
+    --orange:   #ff6b35;
+    --muted:    #4a5568;
+    --text:     #c8d6e5;
+    --dim:      #2d3748;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 12px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  .header-left h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .header-left p {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+  }
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,157,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(0,255,157,0); }
+  }
+  .updated {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .url-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    width: 220px;
+  }
+  .url-btn {
+    background: var(--dim);
+    border: none;
+    color: var(--text);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+  .url-btn:hover { background: var(--border); }
+
+  /* ── POSITION BANNER ── */
+  .position-banner {
+    text-align: center;
+    padding: 14px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    border: 1px solid;
+    transition: all 0.3s;
+  }
+  .banner-flat  { background: rgba(26,37,53,0.5); border-color: var(--border); color: var(--muted); }
+  .banner-long  { background: rgba(0,255,157,0.08); border-color: var(--green); color: var(--green); }
+  .banner-short { background: rgba(255,45,85,0.08);  border-color: var(--red);   color: var(--red); }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .card-title {
+    padding: 8px 14px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .card-body { padding: 4px 0; }
+
+  /* ── ROW ── */
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 14px;
+    border-bottom: 1px solid rgba(26,37,53,0.5);
+  }
+  .row:last-child { border-bottom: none; }
+  .row-label {
+    color: var(--muted);
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .row-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: right;
+    color: var(--text);
+  }
+
+  /* ── VALUE COLORS ── */
+  .green  { color: var(--green) !important; }
+  .red    { color: var(--red)   !important; }
+  .yellow { color: var(--yellow)!important; }
+  .blue   { color: var(--blue)  !important; }
+  .purple { color: var(--purple)!important; }
+  .orange { color: var(--orange)!important; }
+  .muted  { color: var(--muted) !important; }
+
+  /* ── NQ PRICE (large) ── */
+  .price-card {
+    grid-column: 1 / -1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .price-main {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 1px;
+  }
+  .price-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .price-meta span { display: flex; gap: 8px; }
+  .vwap-label { color: var(--blue); }
+
+  /* ── ICT SCORE BAR ── */
+  .score-bar-wrap {
+    padding: 10px 14px 12px;
+  }
+  .score-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .score-bar-bg {
+    height: 6px;
+    background: var(--dim);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease, background 0.3s;
+  }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .badge-green  { background: rgba(0,255,157,0.15); color: var(--green); }
+  .badge-red    { background: rgba(255,45,85,0.15);  color: var(--red); }
+  .badge-yellow { background: rgba(255,214,10,0.15); color: var(--yellow); }
+  .badge-blue   { background: rgba(76,201,240,0.15); color: var(--blue); }
+  .badge-muted  { background: rgba(74,85,104,0.2);   color: var(--muted); }
+  .badge-orange { background: rgba(255,107,53,0.15); color: var(--orange); }
+
+  /* ── LOG ── */
+  .log-card { grid-column: 1 / -1; }
+  .log-body {
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+  .log-entry { color: var(--muted); }
+  .log-win   { color: var(--green); }
+  .log-loss  { color: var(--red); }
+  .log-action { color: var(--yellow); }
+  .log-empty { color: var(--dim); font-style: italic; }
+
+  /* ── URL ROW ── */
+  .url-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>ProfTowel Bot</h1>
+    <p>MNQ AUTONOMOUS TRADER · ICT/SMC · VWAP</p>
+  </div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot" id="liveDot"></div>
+      <span id="liveStatus">CONNECTING</span>
+    </div>
+    <div class="updated" id="updatedAt">--</div>
+    <div class="url-row">
+      <input class="url-input" id="urlInput" placeholder="Tunnel URL (auto-fetched)..." />
+      <button class="url-btn" onclick="setUrl()">SET</button>
+    </div>
+  </div>
+</div>
+
+<!-- POSITION BANNER -->
+<div class="position-banner banner-flat" id="posBanner">NO POSITION</div>
+
+<!-- PRICE ROW -->
+<div class="price-card" style="margin-bottom:10px;">
+  <div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:4px;">NQ PRICE</div>
+    <div class="price-main" id="nqPrice">--</div>
+  </div>
+  <div class="price-meta">
+    <span><span class="vwap-label">VWAP</span> <span id="vwapVal">--</span></span>
+    <span><span>+1σ</span> <span id="vwapU1" class="green">--</span></span>
+    <span><span>-1σ</span> <span id="vwapL1" class="red">--</span></span>
+    <span><span>SESSION</span> <span id="sessionShort" style="color:var(--yellow)">--</span></span>
+    <span><span>P/D ZONE</span> <span id="pdZone" style="color:var(--purple)">--</span></span>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">DAILY P&L</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;" id="dailyPnl">--</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px;">UNREALIZED: <span id="unrealPnl" style="font-family:'JetBrains Mono',monospace;">--</span></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:2px;">BAL: <span id="balVal" style="font-family:'JetBrains Mono',monospace;color:var(--text)">--</span></div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid">
+
+  <!-- ICT SCORE -->
+  <div class="card">
+    <div class="card-title">ICT Score</div>
+    <div class="score-bar-wrap">
+      <div class="score-header">
+        <span id="ictScoreLabel" style="color:var(--text)">--/100</span>
+        <span id="ictAdjLabel" style="color:var(--muted)">Adj: --</span>
+      </div>
+      <div class="score-bar-bg">
+        <div class="score-bar-fill" id="ictBar" style="width:0%;background:var(--muted)"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row"><span class="row-label">Trend 4H</span><span class="row-value" id="trend4h">--</span></div>
+      <div class="row"><span class="row-label">Confidence</span><span class="row-value" id="confidence">--</span></div>
+      <div class="row"><span class="row-label">Setup</span><span class="row-value" id="setupType">--</span></div>
+      <div class="row"><span class="row-label">Day Mult</span><span class="row-value" id="dayMult">--</span></div>
+    </div>
+  </div>
+
+  <!-- POSITION -->
+  <div class="card">
+    <div class="card-title">Position</div>
+    <div class="card-body">
+      <div class="row"><span class="row-label">Symbol</span><span class="row-value blue" id="posSymbol">MNQU6</span></div>
+      <div class="row"><span class="row-label">Side</span><span class="row-value" id="posSide">FLAT</span></div>
+      <div class="row"><span class="row-label">Qty</span><span class="row-value" id="posQty">--</span></div>
+      <div class="row"><span class="row-label">Entry</span><span class="row-value" id="posEntry">--</span></div>
+      <div class="row"><span class="row-label">Stop Loss</span><span class="row-value red" id="posSL">--</span></div>
+      <div class="row"><span class="row-label">Take Profit</span><span class="row-value green" id="posTP">--</span></div>
+    </div>
+  </div>
+
+  <!-- RISK GATES -->
+  <div class="card">
+    <div class="card-title">Risk Gates</div>
+    <div class="card-body">
+      <div class="row"><span class="row-label">Trades Today</span><span class="row-value" id="tradesToday">--</span></div>
+      <div class="row"><span class="row-label">Daily Limit</span><span class="row-value" id="dailyLimit">--</span></div>
+      <div class="row"><span class="row-label">Max Loss</span><span class="row-value" id="maxLoss">$250</span></div>
+      <div class="row"><span class="row-label">Cooldown</span><span class="row-value" id="cooldown">--</span></div>
+      <div class="row"><span class="row-label">Position Lock</span><span class="row-value" id="posLock">--</span></div>
+      <div class="row"><span class="row-label">Halted</span><span class="row-value" id="halted">--</span></div>
+    </div>
+  </div>
+
+  <!-- MARKET DATA -->
+  <div class="card">
+    <div class="card-title">Market</div>
+    <div class="card-body">
+      <div class="row"><span class="row-label">Win Rate</span><span class="row-value" id="winRate">--</span></div>
+      <div class="row"><span class="row-label">Bars Recv</span><span class="row-value" id="barsRecv">--</span></div>
+      <div class="row"><span class="row-label">ATR</span><span class="row-value" id="atrVal">--</span></div>
+      <div class="row"><span class="row-label">P/D %</span><span class="row-value" id="pdPct">--</span></div>
+      <div class="row"><span class="row-label">LLM Model</span><span class="row-value blue" id="llmModel">--</span></div>
+      <div class="row"><span class="row-label">Last Action</span><span class="row-value yellow" id="lastAction" style="font-size:9px;max-width:160px;text-align:right;word-break:break-word;">--</span></div>
+    </div>
+  </div>
+
+  <!-- TRADE LOG -->
+  <div class="card log-card">
+    <div class="card-title">Trade Log</div>
+    <div class="log-body" id="tradeLog">
+      <div class="log-empty">No trades today</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const GIST_URL  = 'https://api.github.com/gists/b4058fd13b6944b6d0afca4d1337f530';
+const POLL_MS   = 5000;
+let   tunnelUrl = localStorage.getItem('ptbot_tunnel') || '';
+let   lastTs    = 0;
+
+// ── GIST AUTO-FETCH ─────────────────────────────────────
+async function fetchGist() {
+  try {
+    const r = await fetch(GIST_URL, {cache:'no-store'});
+    const g = await r.json();
+    const files = g.files || {};
+    const key   = Object.keys(files)[0];
+    if (key) {
+      const url = files[key].content.trim();
+      if (url && url !== tunnelUrl) {
+        tunnelUrl = url;
+        localStorage.setItem('ptbot_tunnel', url);
+        document.getElementById('urlInput').value = url;
+        console.log('[GIST] Tunnel URL:', url);
+      }
+    }
+  } catch(e) { console.warn('[GIST]', e.message); }
+}
+
+function setUrl() {
+  const v = document.getElementById('urlInput').value.trim();
+  if (v) { tunnelUrl = v; localStorage.setItem('ptbot_tunnel', v); }
+}
+
+// ── HELPERS ─────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function fmt(v, dec=2) {
+  if (v === null || v === undefined) return '--';
+  return typeof v === 'number' ? v.toFixed(dec) : String(v);
+}
+
+function setVal(id, val, cls='') {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = (val === null || val === undefined) ? '--' : String(val);
+  if (cls) { el.className = 'row-value ' + cls; }
+}
+
+function pnlClass(v) {
+  if (v === null || v === undefined) return '';
+  return v > 0 ? 'green' : v < 0 ? 'red' : '';
+}
+
+function sessionLabel(s) {
+  const map = {
+    NY_OPEN_KILLZONE:     '🟢 NY OPEN 6:30-8AM PT',
+    ASIAN_SESSION:        '🔵 ASIAN 7-11PM PT',
+    MIDNIGHT_MACRO:       '🌙 MIDNIGHT MACRO 8-10PM PT',
+    LONDON_OPEN_KILLZONE: '🟡 LONDON OPEN 11PM-2AM PT',
+    LONDON_CLOSE_KILLZONE:'🟠 LONDON CLOSE 8-8:30AM PT',
+    PM_MACRO_KILLZONE:    '🟣 PM MACRO 10:30AM-1PM PT',
+    PRE_NY:               '⚪ PRE-NY 4-6:30AM PT',
+    PRE_ASIAN:            '⚫ PRE-ASIAN 1-4PM PT',
+    LUNCH_BLOCK:          '🔴 LUNCH BLOCK — NO TRADE',
+    OVERNIGHT:            '⚫ OVERNIGHT',
+    BETWEEN_SESSIONS:     '⚫ BETWEEN SESSIONS',
+  };
+  return map[s] || s || '--';
+}
+
+function scoreColor(v) {
+  if (!v) return 'var(--muted)';
+  if (v >= 65) return 'var(--green)';
+  if (v >= 45) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+// ── UPDATE UI ───────────────────────────────────────────
+function update(d) {
+  // Live indicator
+  const age = Date.now()/1000 - (d.timestamp || 0);
+  const live = age < 30;
+  $('liveDot').style.background = live ? 'var(--green)' : 'var(--red)';
+  $('liveStatus').textContent   = live ? 'LIVE' : 'STALE';
+  $('updatedAt').textContent     = 'Updated ' + new Date((d.timestamp||0)*1000).toLocaleTimeString();
+
+  // Price
+  const price = d.nq_price;
+  $('nqPrice').textContent = price ? price.toFixed(2) : '--';
+  $('nqPrice').className   = 'price-main ' + (price ? 'green' : '');
+
+  // VWAP
+  const vwap = d.vwap;
+  $('vwapVal').textContent = vwap ? (typeof vwap==='number' ? vwap.toFixed(2) : String(vwap).replace('np.float64(','').replace(')','')) : '--';
+  if (d.last_decision) {
+    const ld = d.last_decision;
+    const vd = ld.vwap;
+    if (vd) $('vwapVal').textContent = typeof vd==='number' ? vd.toFixed(2) : String(vd).replace(/np\.float64\(|\)/g,'');
+  }
+
+  // Session
+  $('sessionShort').textContent = sessionLabel(d.session);
+
+  // P/D Zone
+  const pd = d.pd_zone || (d.last_decision||{}).pd_zone;
+  $('pdZone').textContent = pd || '--';
+  $('pdZone').className   = pd === 'PREMIUM' ? 'red' : pd === 'DISCOUNT' ? 'green' : '';
+
+  // P&L
+  const dpnl = d.daily_pnl;
+  $('dailyPnl').textContent = dpnl !== undefined ? (dpnl >= 0 ? '+$' : '-$') + Math.abs(dpnl).toFixed(2) : '--';
+  $('dailyPnl').className   = pnlClass(dpnl);
+  const upnl = d.unrealized_pnl;
+  $('unrealPnl').textContent = upnl !== undefined && upnl !== null ? (upnl >= 0 ? '+$' : '-$') + Math.abs(upnl).toFixed(2) : '--';
+  $('unrealPnl').className   = pnlClass(upnl);
+  $('balVal').textContent    = d.balance ? '$' + d.balance.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : '--';
+
+  // Position banner
+  const side = d.position_side;
+  const banner = $('posBanner');
+  if (!side) {
+    banner.textContent  = 'NO POSITION';
+    banner.className    = 'position-banner banner-flat';
+  } else {
+    banner.textContent  = side + ' · ' + (d.position_qty||1) + ' CONTRACT' + ((d.position_qty||1)>1?'S':'') + ' · ENTRY ' + (d.entry_price||'--');
+    banner.className    = 'position-banner ' + (side==='LONG' ? 'banner-long' : 'banner-short');
+  }
+
+  // Position fields
+  setVal('posSide',  side || 'FLAT', side==='LONG'?'green':side==='SHORT'?'red':'muted');
+  setVal('posQty',   d.position_qty);
+  setVal('posEntry', d.entry_price ? Number(d.entry_price).toFixed(2) : '--');
+  setVal('posSL',    d.stop_loss   ? Number(d.stop_loss).toFixed(2)   : '--', 'red');
+  setVal('posTP',    d.take_profit ? Number(d.take_profit).toFixed(2) : '--', 'green');
+
+  // ICT Score
+  const score = d.ict_score;
+  const adj   = d.adj_score;
+  $('ictScoreLabel').textContent = score !== undefined ? score + '/100' : '--/100';
+  $('ictScoreLabel').style.color = scoreColor(adj || score);
+  $('ictAdjLabel').textContent   = adj !== undefined ? 'Adj: ' + adj : 'Adj: --';
+  const barPct = Math.min(100, Math.max(0, adj || score || 0));
+  $('ictBar').style.width      = barPct + '%';
+  $('ictBar').style.background = scoreColor(barPct);
+
+  // ICT detail
+  const t4h = d.trend_4h || (d.last_decision||{}).trend_4h;
+  setVal('trend4h', t4h, t4h==='BULL'||t4h==='bull'?'green':t4h==='BEAR'||t4h==='bear'?'red':'');
+
+  const conf = d.confidence || (d.last_decision||{}).confidence;
+  $('confidence').textContent = conf !== undefined ? conf + '%' : '--';
+  $('confidence').className   = 'row-value ' + (conf >= 80 ? 'green' : conf >= 65 ? 'yellow' : conf ? 'red' : '');
+
+  const st = d.setup_type || (d.last_decision||{}).setup_type;
+  $('setupType').textContent = st || '--';
+  $('setupType').className   = 'row-value ' + (st && st !== 'hold' ? 'blue' : 'muted');
+
+  setVal('dayMult', d.day_mult !== undefined ? 'x' + d.day_mult : '--');
+
+  // Risk gates
+  const td  = d.trades_today;
+  const max = d.max_daily_trades || 4;
+  $('tradesToday').textContent = td !== undefined ? td + '/' + max : '--';
+  $('tradesToday').className   = 'row-value ' + (td >= max ? 'red' : td > 0 ? 'yellow' : 'green');
+  setVal('dailyLimit', '$1,000');
+  setVal('maxLoss', '$250');
+
+  const cd = d.cooldown_remaining;
+  $('cooldown').textContent = cd > 0 ? cd + 's' : 'READY';
+  $('cooldown').className   = 'row-value ' + (cd > 0 ? 'yellow' : 'green');
+
+  $('posLock').textContent = d.position_lock ? 'LOCKED' : 'OPEN';
+  $('posLock').className   = 'row-value ' + (d.position_lock ? 'red' : 'green');
+
+  $('halted').textContent = d.trading_halted ? 'HALTED' : 'OK';
+  $('halted').className   = 'row-value ' + (d.trading_halted ? 'red' : 'green');
+
+  // Market
+  const wr = d.win_rate;
+  $('winRate').textContent = wr !== null && wr !== undefined ? (wr*100).toFixed(0)+'%' : '--';
+  $('winRate').className   = 'row-value ' + (wr >= 0.5 ? 'green' : wr > 0 ? 'yellow' : '');
+  setVal('barsRecv', d.bars_received);
+  setVal('atrVal',   d.atr_shrunk ? Number(d.atr_shrunk).toFixed(2) : '--');
+
+  const pdp = d.pd_pct || (d.last_decision||{}).pd_pct;
+  $('pdPct').textContent = pdp !== undefined ? (typeof pdp==='number'?pdp:parseFloat(String(pdp).replace(/[^0-9.]/g,''))).toFixed(1)+'%' : '--';
+
+  setVal('llmModel', d.llm_model || 'proftowel-trader', 'blue');
+  $('lastAction').textContent = d.last_action || '--';
+
+  // Trade log
+  const trades = d.trades || [];
+  const log    = $('tradeLog');
+  if (trades.length === 0) {
+    log.innerHTML = '<div class="log-empty">No trades today</div>';
+  } else {
+    log.innerHTML = trades.slice().reverse().map(t => {
+      const pnl = parseFloat(t.pnl) || 0;
+      const cls = pnl > 0 ? 'log-win' : pnl < 0 ? 'log-loss' : 'log-entry';
+      return `<div class="${cls}">${t.time || ''} · ${(t.direction||'').toUpperCase()} · ` +
+             `E:${t.entry||'--'} X:${t.exit||'--'} · ` +
+             `${pnl>=0?'+':''}$${pnl.toFixed(2)} · ${t.reason||''}</div>`;
+    }).join('');
+  }
+
+  // Last error
+  if (d.last_error) {
+    $('lastAction').textContent  = '⚠ ' + d.last_error;
+    $('lastAction').className    = 'row-value red';
+  }
+}
+
+// ── POLL ────────────────────────────────────────────────
+async function poll() {
+  if (!tunnelUrl) return;
+  try {
+    const url = tunnelUrl.replace(/\/$/, '') + '/status';
+    const r   = await fetch(url, {cache:'no-store', signal: AbortSignal.timeout(4000)});
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    update(d);
+  } catch(e) {
+    $('liveStatus').textContent   = 'OFFLINE';
+    $('liveDot').style.background = 'var(--red)';
+  }
+}
+
+// ── BOOT ────────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  const stored = localStorage.getItem('ptbot_tunnel');
+  if (stored) {
+    tunnelUrl = stored;
+    $('urlInput').value = stored;
+  }
+  await fetchGist();
+  await poll();
+  setInterval(poll, POLL_MS);
+  setInterval(fetchGist, 60000);
+});
+</script>
+</body>
+</html>
