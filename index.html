@@ -415,8 +415,15 @@ async function fetchGist() {
     const files = g.files || {};
     const key   = Object.keys(files)[0];
     if (key) {
-      const url = files[key].content.trim();
-      if (url && url !== tunnelUrl) {
+      let raw = files[key].content.trim();
+      // Handle both plain URL and JSON {"url":"..."} formats
+      let url = raw;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.url) url = parsed.url;
+      } catch(e) {}
+      url = url.trim();
+      if (url && url.startsWith('http') && url !== tunnelUrl) {
         tunnelUrl = url;
         localStorage.setItem('ptbot_tunnel', url);
         document.getElementById('urlInput').value = url;
