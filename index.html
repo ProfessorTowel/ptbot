@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProfTowel Bot</title>
+<title>ProfTowel | MNQ + MES</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -304,28 +304,66 @@
   </div>
 </div>
 
-<!-- POSITION BANNER -->
-<div class="position-banner banner-flat" id="posBanner">NO POSITION</div>
+<!-- DUAL BOT PRICE ROW -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
 
-<!-- PRICE ROW -->
-<div class="price-card" style="margin-bottom:10px;">
-  <div>
-    <div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:4px;">NQ PRICE</div>
-    <div class="price-main" id="nqPrice">--</div>
+  <!-- MNQ BOT -->
+  <div class="price-card" style="flex-direction:column;gap:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:3px;">MNQ · MNQU6</div>
+        <div class="price-main" id="nqPrice" style="font-size:24px;">--</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">DAILY P&L</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;" id="dailyPnl">--</div>
+      </div>
+    </div>
+    <div class="price-meta" style="gap:6px;flex-wrap:wrap;">
+      <span><span class="vwap-label">VWAP</span> <span id="vwapVal">--</span></span>
+      <span><span>SESSION</span> <span id="sessionShort" style="color:var(--yellow)">--</span></span>
+      <span><span>P/D</span> <span id="pdZone" style="color:var(--purple)">--</span></span>
+      <span><span>UNREAL</span> <span id="unrealPnl">--</span></span>
+      <span><span>BAL</span> <span id="balVal">--</span></span>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;">
+      <span>GRADE: <span id="mnqGrade" style="color:var(--yellow);font-family:'JetBrains Mono',monospace;font-weight:700;">--</span></span>
+      <span>H: <span id="mnqHurst" style="color:var(--blue);font-family:'JetBrains Mono',monospace;">--</span></span>
+      <span>REGIME: <span id="mnqRegime" style="color:var(--purple)">--</span></span>
+    </div>
   </div>
-  <div class="price-meta">
-    <span><span class="vwap-label">VWAP</span> <span id="vwapVal">--</span></span>
-    <span><span>+1σ</span> <span id="vwapU1" class="green">--</span></span>
-    <span><span>-1σ</span> <span id="vwapL1" class="red">--</span></span>
-    <span><span>SESSION</span> <span id="sessionShort" style="color:var(--yellow)">--</span></span>
-    <span><span>P/D ZONE</span> <span id="pdZone" style="color:var(--purple)">--</span></span>
+
+  <!-- MES BOT -->
+  <div class="price-card" style="flex-direction:column;gap:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:9px;color:var(--orange);letter-spacing:2px;margin-bottom:3px;">MES · MESU6</div>
+        <div class="price-main" id="esPrice" style="font-size:24px;color:var(--orange);">--</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:9px;color:var(--muted);margin-bottom:3px;">DAILY P&L</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;" id="mesDailyPnl">--</div>
+      </div>
+    </div>
+    <div class="price-meta" style="gap:6px;flex-wrap:wrap;">
+      <span><span style="color:var(--muted)">TRADES</span> <span id="mesTrades">--</span></span>
+      <span><span style="color:var(--muted)">SETUP</span> <span id="mesSetup" style="color:var(--blue)">--</span></span>
+      <span><span style="color:var(--muted)">SIGNAL</span> <span id="mesSignal">--</span></span>
+      <span><span style="color:var(--muted)">CAP</span> <span id="mesCap" style="color:var(--red)">$450</span></span>
+    </div>
+    <div style="display:flex;gap:8px;font-size:10px;">
+      <span>GRADE: <span id="mesGrade" style="color:var(--yellow);font-family:'JetBrains Mono',monospace;font-weight:700;">--</span></span>
+      <span>H: <span id="mesHurst" style="color:var(--blue);font-family:'JetBrains Mono',monospace;">--</span></span>
+      <span>SMT: <span id="smtDiv" style="color:var(--red)">--</span></span>
+    </div>
   </div>
-  <div style="text-align:right;">
-    <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">DAILY P&L</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;" id="dailyPnl">--</div>
-    <div style="font-size:10px;color:var(--muted);margin-top:4px;">UNREALIZED: <span id="unrealPnl" style="font-family:'JetBrains Mono',monospace;">--</span></div>
-    <div style="font-size:10px;color:var(--muted);margin-top:2px;">BAL: <span id="balVal" style="font-family:'JetBrains Mono',monospace;color:var(--text)">--</span></div>
-  </div>
+
+</div>
+
+<!-- POSITION BANNERS -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+  <div class="position-banner banner-flat" id="posBanner">MNQ — NO POSITION</div>
+  <div class="position-banner banner-flat" id="mesBanner" style="border-color:var(--orange)">MES — NO POSITION</div>
 </div>
 
 <!-- MAIN GRID -->
@@ -390,11 +428,34 @@
     </div>
   </div>
 
+  <!-- MES POSITION -->
+  <div class="card">
+    <div class="card-title" style="color:var(--orange)">MES Position</div>
+    <div class="card-body">
+      <div class="row"><span class="row-label">Side</span><span class="row-value" id="mesPosSide">FLAT</span></div>
+      <div class="row"><span class="row-label">Qty</span><span class="row-value" id="mesPosQty">--</span></div>
+      <div class="row"><span class="row-label">Entry</span><span class="row-value" id="mesPosEntry">--</span></div>
+      <div class="row"><span class="row-label">Stop Loss</span><span class="row-value red" id="mesPosSL">--</span></div>
+      <div class="row"><span class="row-label">TP1</span><span class="row-value green" id="mesPosTP1">--</span></div>
+      <div class="row"><span class="row-label">TP2</span><span class="row-value green" id="mesPosTP2">--</span></div>
+      <div class="row"><span class="row-label">Risk/Trade</span><span class="row-value yellow">$125</span></div>
+      <div class="row"><span class="row-label">Day Cap</span><span class="row-value red">$900L / $1200P</span></div>
+    </div>
+  </div>
+
   <!-- TRADE LOG -->
   <div class="card log-card">
-    <div class="card-title">Trade Log</div>
+    <div class="card-title">Trade Log — MNQ</div>
     <div class="log-body" id="tradeLog">
       <div class="log-empty">No trades today</div>
+    </div>
+  </div>
+
+  <!-- MES TRADE LOG -->
+  <div class="card log-card">
+    <div class="card-title" style="color:var(--orange)">Trade Log — MES</div>
+    <div class="log-body" id="mesTradeLog">
+      <div class="log-empty">No MES trades today</div>
     </div>
   </div>
 
@@ -617,6 +678,91 @@ function update(d) {
   }
 }
 
+// ── MES STATE (reads shared_state_mes.json via Flask) ───
+async function pollMES() {
+  if (!tunnelUrl) return;
+  try {
+    const url = tunnelUrl.replace(/\/$/, '') + '/mes_status';
+    const r   = await fetch(url, {cache:'no-store', signal: AbortSignal.timeout(4000)});
+    if (!r.ok) return;
+    const d = await r.json();
+    updateMES(d);
+  } catch(e) { /* MES offline — don't crash MNQ display */ }
+}
+
+function updateMES(d) {
+  // Price
+  const p = d.last_price;
+  $('esPrice').textContent = p ? Number(p).toFixed(2) : '--';
+
+  // Daily P&L
+  const pnl = d.daily_pnl;
+  $('mesDailyPnl').textContent = pnl !== undefined
+    ? (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2) : '--';
+  $('mesDailyPnl').className = pnlClass(pnl);
+
+  // Fractal
+  $('mesGrade').textContent  = d.fractal_grade  || '--';
+  $('mesHurst').textContent  = d.fractal_hurst  ? Number(d.fractal_hurst).toFixed(3) : '--';
+  $('mesGrade').style.color  = d.fractal_grade === 'A+' ? 'var(--green)'
+                             : d.fractal_grade === 'B'  ? 'var(--yellow)'
+                             : 'var(--muted)';
+
+  // SMT divergence
+  const smt = d.smt_divergence;
+  $('smtDiv').textContent   = smt ? '⚡ DIVERGENCE' : 'NONE';
+  $('smtDiv').style.color   = smt ? 'var(--red)' : 'var(--muted)';
+
+  // Setup
+  $('mesSetup').textContent  = d.setup_type  || '--';
+  $('mesSignal').textContent = d.last_signal_direction
+    ? d.last_signal_direction.toUpperCase() : '--';
+  $('mesSignal').style.color = d.last_signal_direction === 'buy'
+    ? 'var(--green)' : d.last_signal_direction === 'sell'
+    ? 'var(--red)' : 'var(--muted)';
+
+  // Trades today
+  $('mesTrades').textContent = (d.daily_trades !== undefined)
+    ? d.daily_trades + '/' + 3 : '--';
+
+  // Open trade
+  const ot = d.open_trade;
+  const mesBanner = $('mesBanner');
+  if (ot) {
+    const side = ot.direction === 'buy' ? 'LONG' : 'SHORT';
+    mesBanner.textContent = 'MES · ' + side + ' · ' + (ot.qty||1)
+      + ' CONTRACT' + ((ot.qty||1)>1?'S':'') + ' · ENTRY ' + (ot.entry_price||'--');
+    mesBanner.className = 'position-banner ' + (side==='LONG'?'banner-long':'banner-short');
+    mesBanner.style.borderColor = 'var(--orange)';
+    setVal('mesPosSide',  side, side==='LONG'?'green':'red');
+    setVal('mesPosQty',   ot.qty);
+    setVal('mesPosEntry', ot.entry_price ? Number(ot.entry_price).toFixed(2) : '--');
+    setVal('mesPosSL',    ot.sl_price    ? Number(ot.sl_price).toFixed(2)    : '--', 'red');
+    setVal('mesPosTP1',   ot.tp1_price   ? Number(ot.tp1_price).toFixed(2)   : '--', 'green');
+    setVal('mesPosTP2',   ot.tp2_price   ? Number(ot.tp2_price).toFixed(2)   : '--', 'green');
+  } else {
+    mesBanner.textContent   = 'MES — NO POSITION';
+    mesBanner.className     = 'position-banner banner-flat';
+    mesBanner.style.borderColor = 'var(--orange)';
+    setVal('mesPosSide', 'FLAT', 'muted');
+    ['mesPosQty','mesPosEntry','mesPosSL','mesPosTP1','mesPosTP2'].forEach(id => setVal(id,'--'));
+  }
+
+  // MES trade log
+  const trades = d.trades || [];
+  const log = $('mesTradeLog');
+  if (trades.length === 0) {
+    log.innerHTML = '<div class="log-empty">No MES trades today</div>';
+  } else {
+    log.innerHTML = trades.slice().reverse().map(t => {
+      const pnl = parseFloat(t.pnl) || 0;
+      const cls = pnl > 0 ? 'log-win' : pnl < 0 ? 'log-loss' : 'log-entry';
+      return `<div class="${cls}">${t.time||''} · ${(t.direction||'').toUpperCase()} · `
+           + `E:${t.entry||'--'} · ${pnl>=0?'+':''}$${pnl.toFixed(2)}</div>`;
+    }).join('');
+  }
+}
+
 // ── POLL ────────────────────────────────────────────────
 async function poll() {
   if (!tunnelUrl) return;
@@ -626,6 +772,13 @@ async function poll() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     update(d);
+    // Inject MNQ fractal data into top panel
+    $('mnqGrade').textContent  = d.fractal_grade  || '--';
+    $('mnqHurst').textContent  = d.fractal_hurst  ? Number(d.fractal_hurst).toFixed(3) : '--';
+    $('mnqRegime').textContent = d.fractal_regime ? d.fractal_regime.replace('_',' ') : '--';
+    $('mnqGrade').style.color  = d.fractal_grade === 'A+' ? 'var(--green)'
+                               : d.fractal_grade === 'B'  ? 'var(--yellow)'
+                               : 'var(--muted)';
   } catch(e) {
     $('liveStatus').textContent   = 'OFFLINE';
     $('liveDot').style.background = 'var(--red)';
@@ -642,7 +795,9 @@ window.addEventListener('load', async () => {
   await fetchGist();
   await poll();
   setInterval(poll, POLL_MS);
+  setInterval(pollMES, POLL_MS);
   setInterval(fetchGist, 60000);
+  pollMES();
 });
 </script>
 </body>
