@@ -1,345 +1,224 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProfTowel — Trading Terminal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ptbot // command</title><style>
 :root{
-  --bg:#0a0a0a;--surface:#111111;--surface2:#1a1a1a;--surface3:#222222;
-  --gold:#d4a843;--gold-dim:#8a6d2b;--gold-bright:#f0c75e;
-  --green:#00e676;--green-dim:#00a152;--red:#ff3d3d;--red-dim:#b71c1c;
-  --text:#e0e0e0;--text-dim:#6a6a6a;--text-bright:#ffffff;
-  --border:#2a2a2a;--mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --bg:#000; --amb:#FFB000; --amb2:#FFD37A; --dim:rgba(255,176,0,.30);
+  --dim2:rgba(255,176,0,.14); --line:rgba(255,176,0,.22);
+  --panel:rgba(255,176,0,.028); --cyan:#4FD8E8;
+  --good:#31E07A; --bad:#FF5C39; --warn:#FFC24A;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;overflow-x:hidden}
-.terminal-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;grid-template-rows:auto;gap:1px;padding:1px;background:var(--border);min-height:100vh}
-
-/* Header bar */
-.header{grid-column:1/-1;background:var(--surface);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--gold)}
-.header h1{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
-.header .status{display:flex;gap:16px;align-items:center}
-.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
-.pulse.dead{background:var(--red);box-shadow:0 0 8px var(--red)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.header .clock{font-family:var(--mono);color:var(--gold-dim);font-size:12px}
-
-/* Cards */
-.card{background:var(--surface);padding:16px;position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold-dim)}
-.card-title{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-.card-title .dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
-
-/* Big price display */
-.price-card{grid-column:1/3;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
-.price-main{font-family:var(--mono);font-size:56px;font-weight:700;color:var(--green);text-shadow:0 0 30px rgba(0,230,118,.2);line-height:1}
-.price-label{font-family:var(--mono);font-size:11px;color:var(--gold-dim);margin-top:4px;letter-spacing:2px}
-.price-change{font-family:var(--mono);font-size:16px;margin-top:8px;font-weight:600}
-.price-change.up{color:var(--green)}.price-change.down{color:var(--red)}
-
-/* Stat rows */
-.stat-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--border)}
-.stat-row:last-child{border-bottom:none}
-.stat-label{color:var(--text-dim);font-size:11px;font-family:var(--mono)}
-.stat-value{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green)}
-.stat-value.negative{color:var(--red)}
-.stat-value.gold{color:var(--gold)}
-.stat-value.neutral{color:var(--text)}
-
-/* Progress bar */
-.progress-wrap{margin-top:8px}
-.progress-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-bottom:4px}
-.progress-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
-.progress-fill{height:100%;border-radius:3px;transition:width .5s;background:linear-gradient(90deg,var(--gold-dim),var(--gold-bright))}
-.progress-fill.danger{background:linear-gradient(90deg,var(--red-dim),var(--red))}
-
-/* Position card */
-.position-card{grid-column:1/3}
-.pos-direction{display:inline-block;padding:3px 10px;border-radius:3px;font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:1px}
-.pos-direction.buy{background:rgba(0,230,118,.15);color:var(--green);border:1px solid var(--green-dim)}
-.pos-direction.sell{background:rgba(255,61,61,.15);color:var(--red);border:1px solid var(--red-dim)}
-.pos-direction.flat{background:var(--surface2);color:var(--text-dim);border:1px solid var(--border)}
-.pos-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:12px}
-.pos-item{text-align:center}
-.pos-item .val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green)}
-.pos-item .lbl{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
-
-/* Trade log */
-.trade-log{grid-column:1/-1;max-height:200px;overflow-y:auto}
-.trade-log table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px}
-.trade-log th{color:var(--gold);font-size:9px;text-transform:uppercase;letter-spacing:1px;text-align:left;padding:6px 8px;border-bottom:1px solid var(--gold-dim);position:sticky;top:0;background:var(--surface)}
-.trade-log td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text)}
-.trade-log .win{color:var(--green)}.trade-log .loss{color:var(--red)}
-
-/* Action log */
-.action-log{grid-column:3/5;font-family:var(--mono);font-size:11px;max-height:300px;overflow-y:auto}
-.action-line{padding:3px 0;border-bottom:1px solid var(--border);color:var(--text-dim)}
-.action-line .tag{color:var(--gold);font-weight:600}
-.action-line .err{color:var(--red)}
-
-/* Footer */
-.footer{grid-column:1/-1;background:var(--surface);padding:8px 20px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text-dim);border-top:1px solid var(--gold-dim)}
-
-/* Responsive */
-@media(max-width:900px){.terminal-grid{grid-template-columns:1fr 1fr}.price-card,.position-card{grid-column:1/-1}.trade-log,.action-log{grid-column:1/-1}}
-@media(max-width:600px){.terminal-grid{grid-template-columns:1fr}.price-main{font-size:36px}}
-</style>
-</head>
-<body>
-<div class="terminal-grid">
-
-  <!-- HEADER -->
-  <div class="header">
-    <h1>ProfTowel Terminal</h1>
-    <div class="status">
-      <span id="feedStatus" style="font-family:var(--mono);font-size:11px;color:var(--green)">LIVE</span>
-      <div class="pulse" id="pulse"></div>
-      <span class="clock" id="clock">--:--:--</span>
-    </div>
-  </div>
-
-  <!-- PRICE -->
-  <div class="card price-card">
-    <div class="card-title"><span class="dot"></span>MNQU2026</div>
-    <div class="price-main" id="price">--,---.--</div>
-    <div class="price-label">MICRO NASDAQ FUTURES</div>
-    <div class="price-change" id="priceChange">-- pts</div>
-  </div>
-
-  <!-- ACCOUNT -->
-  <div class="card">
-    <div class="card-title"><span class="dot"></span>Account</div>
-    <div class="stat-row"><span class="stat-label">Balance</span><span class="stat-value gold" id="balance">$--</span></div>
-    <div class="stat-row"><span class="stat-label">Day P&L</span><span class="stat-value" id="dayPnl">$--</span></div>
-    <div class="stat-row"><span class="stat-label">Eval Profit</span><span class="stat-value" id="evalProfit">$--</span></div>
-    <div class="stat-row"><span class="stat-label">Realized P&L</span><span class="stat-value" id="realPnl">$--</span></div>
-    <div class="progress-wrap">
-      <div class="progress-label"><span>Progress to Target</span><span id="targetPct">0%</span></div>
-      <div class="progress-bar"><div class="progress-fill" id="targetBar" style="width:0%"></div></div>
-    </div>
-  </div>
-
-  <!-- RISK -->
-  <div class="card">
-    <div class="card-title"><span class="dot"></span>Risk Governor</div>
-    <div class="stat-row"><span class="stat-label">Mode</span><span class="stat-value gold" id="govMode">--</span></div>
-    <div class="stat-row"><span class="stat-label">DD Floor</span><span class="stat-value neutral" id="govFloor">$--</span></div>
-    <div class="stat-row"><span class="stat-label">Cushion</span><span class="stat-value" id="govCushion">$--</span></div>
-    <div class="stat-row"><span class="stat-label">Trades Today</span><span class="stat-value neutral" id="tradesToday">0/5</span></div>
-    <div class="stat-row"><span class="stat-label">Trading Days</span><span class="stat-value neutral" id="tradingDays">0</span></div>
-    <div class="progress-wrap">
-      <div class="progress-label"><span>Drawdown Used</span><span id="ddPct">0%</span></div>
-      <div class="progress-bar"><div class="progress-fill danger" id="ddBar" style="width:0%"></div></div>
-    </div>
-  </div>
-
-  <!-- POSITION -->
-  <div class="card position-card">
-    <div class="card-title"><span class="dot"></span>Position</div>
-    <span class="pos-direction flat" id="posDir">FLAT</span>
-    <div class="pos-grid">
-      <div class="pos-item"><div class="val" id="posEntry">--</div><div class="lbl">Entry</div></div>
-      <div class="pos-item"><div class="val" id="posSL">--</div><div class="lbl">Stop Loss</div></div>
-      <div class="pos-item"><div class="val" id="posTP">--</div><div class="lbl">Target</div></div>
-      <div class="pos-item"><div class="val" id="posUnreal">--</div><div class="lbl">Unrealized</div></div>
-    </div>
-  </div>
-
-  <!-- SIGNALS -->
-  <div class="card">
-    <div class="card-title"><span class="dot"></span>Signal Engine</div>
-    <div class="stat-row"><span class="stat-label">ICT Score</span><span class="stat-value gold" id="ictScore">0</span></div>
-    <div class="stat-row"><span class="stat-label">Setup</span><span class="stat-value neutral" id="setupType">--</span></div>
-    <div class="stat-row"><span class="stat-label">Confidence</span><span class="stat-value" id="confidence">0%</span></div>
-    <div class="stat-row"><span class="stat-label">VWAP Bias</span><span class="stat-value neutral" id="vwapBias">--</span></div>
-    <div class="stat-row"><span class="stat-label">Killzone</span><span class="stat-value gold" id="killzone">--</span></div>
-    <div class="stat-row"><span class="stat-label">ATR</span><span class="stat-value neutral" id="atr">--</span></div>
-  </div>
-
-  <!-- MARKET -->
-  <div class="card">
-    <div class="card-title"><span class="dot"></span>Market Context</div>
-    <div class="stat-row"><span class="stat-label">VWAP</span><span class="stat-value neutral" id="vwap">--</span></div>
-    <div class="stat-row"><span class="stat-label">Regime</span><span class="stat-value neutral" id="regime">--</span></div>
-    <div class="stat-row"><span class="stat-label">OFI</span><span class="stat-value neutral" id="ofi">--</span></div>
-    <div class="stat-row"><span class="stat-label">Tick Rate</span><span class="stat-value" id="tickRate">--/sec</span></div>
-    <div class="stat-row"><span class="stat-label">LLM Model</span><span class="stat-value gold" id="llmModel">--</span></div>
-    <div class="stat-row"><span class="stat-label">Last Action</span><span class="stat-value neutral" id="lastAction">--</span></div>
-  </div>
-
-  <!-- TRADE LOG -->
-  <div class="card trade-log">
-    <div class="card-title"><span class="dot"></span>Trade History</div>
-    <table>
-      <thead><tr><th>Time</th><th>Side</th><th>Entry</th><th>Exit</th><th>P&L</th><th>Reason</th></tr></thead>
-      <tbody id="tradeBody"></tbody>
-    </table>
-  </div>
-
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-  <span>ProfTowel v3 — Privatus Consultant LLC</span>
-  <span>Lucid Flex 50K Evaluation</span>
-  <span id="lastUpdate">Last update: --</span>
-</div>
-
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--amb);
+  font:12px/1.45 ui-monospace,"Cascadia Mono",Consolas,monospace;
+  letter-spacing:.02em;padding:14px 16px 40px}
+/* Faint CRT scanline over the page ground only. It sits behind every panel
+   and never over a number you might act on. */
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(180deg,rgba(255,176,0,.020) 0 1px,
+    transparent 1px 3px)}
+#root,h1,footer{position:relative;z-index:1}
+h1{font-size:12px;letter-spacing:.34em;margin:0 0 12px;color:var(--amb2);
+  text-transform:uppercase;font-weight:500}
+h1 small{float:right;color:var(--dim);letter-spacing:.18em;font-size:10px}
+.lbl{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--dim)}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.card{position:relative;border:1px solid var(--line);background:var(--panel);
+  padding:11px 13px 13px}
+.card.wide{grid-column:1/-1}
+.card:before,.card:after{content:"";position:absolute;width:9px;height:9px;
+  border:1px solid var(--amb);opacity:.75}
+.card:before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.card:after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.card>.lbl{margin-bottom:8px;display:block}
+.card.alert{border-color:var(--bad);background:rgba(255,92,57,.05)}
+.card.alert:before,.card.alert:after{border-color:var(--bad)}
+table{width:100%;border-collapse:collapse}
+td,th{padding:3px 6px 3px 0;text-align:left;vertical-align:baseline}
+th{font-size:9.5px;letter-spacing:.18em;color:var(--dim);font-weight:400;
+  text-transform:uppercase;border-bottom:1px solid var(--dim2)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.dim td{color:var(--dim)}
+.big{font-size:26px;line-height:1.1;color:var(--amb2);
+  font-variant-numeric:tabular-nums}
+.mid{font-size:15px;font-variant-numeric:tabular-nums}
+.ctx{color:var(--dim)}
+.good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+.cy{color:var(--cyan)}
+.state{display:inline-block;padding:4px 14px;border:1px solid currentColor;
+  letter-spacing:.26em;font-size:11px;text-transform:uppercase}
+.state.live{background:var(--bad);color:#000;border-color:var(--bad);
+  font-weight:700}
+.bar{height:5px;background:var(--dim2);margin-top:5px;position:relative}
+.bar>i{position:absolute;left:0;top:0;bottom:0;background:var(--amb);
+  display:block}
+.bar>i.bad{background:var(--bad)} .bar>i.good{background:var(--good)}
+.rule{height:1px;background:var(--dim2);margin:9px 0}
+.pill{border:1px solid var(--line);padding:1px 6px;font-size:9.5px;
+  letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+.pill.hot{border-color:var(--bad);color:var(--bad)}
+.pill.on{border-color:var(--good);color:var(--good)}
+.tape{max-height:210px;overflow:auto}
+.spark{display:block;width:100%;height:34px;margin-top:6px}
+footer{margin-top:16px;color:var(--dim);font-size:10px;letter-spacing:.14em}
+</style></head><body>
+<h1>ptbot // command station <small id="clock">—</small></h1>
+<div id="root" class="grid"><div class="card"><span class="lbl">loading</span></div></div>
+<footer id="foot">—</footer>
 <script>
-const GIST_URL = 'https://gist.githubusercontent.com/ProfessorTowel/b4058fd13b6944b6d0afca4d1337f530/raw/ptbot_tunnel.json';
-let STATE_URL = null;
-const TARGET = 3000;
-const MAX_LOSS = 2000;
-const REFRESH_MS = 2000;
-let _tunnelResolved = false;
+const num=(v,d=2)=>(v===null||v===undefined||isNaN(v))?'—':Number(v).toFixed(d);
+const money=(v)=>(v===null||v===undefined)?'—':(v<0?'-':'')+'$'+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const sgn=(v)=>v>0?'good':(v<0?'bad':'ctx');
+const age=(s)=>s===null?'—':(s<90?num(s,0)+'s':(s<5400?num(s/60,0)+'m':num(s/3600,1)+'h'));
+const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-async function resolveTunnel(){
-  try{
-    const r=await fetch(GIST_URL+'?t='+Date.now());
-    if(r.ok){
-      const d=await r.json();
-      if(d.url){
-        STATE_URL=d.url.replace(/\/$/,'')+'/shared_state.json';
-        _tunnelResolved=true;
-        document.getElementById('feedStatus').textContent='CONNECTING';
-        document.getElementById('feedStatus').style.color='var(--gold)';
-        console.log('Tunnel resolved:',STATE_URL);
-      }
+function card(label,inner,cls){return '<div class="card '+(cls||'')+'"><span class="lbl">'+label+'</span>'+inner+'</div>'}
+
+// Cumulative-ticks sparkline. No library: a plain polyline over the tape,
+// oldest to newest, with a zero rule so sign is readable at a glance.
+function spark(vals){
+  if(!vals.length)return '';
+  let c=0;const pts=vals.map(v=>c+=v);
+  const mn=Math.min(0,...pts),mx=Math.max(0,...pts),rng=(mx-mn)||1;
+  const W=100,H=34;
+  const xy=pts.map((p,i)=>[(i/(Math.max(1,pts.length-1)))*W,H-((p-mn)/rng)*H]);
+  const d=xy.map(p=>p[0].toFixed(2)+','+p[1].toFixed(2)).join(' ');
+  const z=H-((0-mn)/rng)*H;
+  const last=pts[pts.length-1];
+  return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+    '<line x1="0" y1="'+z.toFixed(2)+'" x2="'+W+'" y2="'+z.toFixed(2)+'" stroke="rgba(255,176,0,.25)" stroke-width=".5"/>'+
+    '<polyline points="'+d+'" fill="none" stroke="'+(last>=0?'#31E07A':'#FF5C39')+'" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>';
+}
+
+function render(s){
+  const R=[];
+  const sh=s.shadow||{}, ea=sh.engine_armed, sa=sh.scalper_armed;
+  const inst=(sh.instruments)||{};
+
+  // 1. ARMED OR SHADOW. The only irreversible fact here, so it leads and it
+  //    is the loudest thing on the page once live.
+  let ex='<div>'+
+    '<span class="state '+(sa?'live':'good')+'">SCALPER '+(sa?'ARMED':'SHADOW')+'</span> '+
+    '<span class="state '+(ea?'live':'good')+'">ENGINE '+(ea?'ARMED':'SHADOW')+'</span></div>'+
+    '<div class="rule"></div>'+
+    '<table><tr><td class="ctx">MNQ</td><td>zone_scalper · 24t target / 36t stop · ~23/day</td></tr>'+
+    '<tr><td class="ctx">MES M2K MYM</td><td>nqq_live engine · trim + 5th-swing trail · ~2/wk each</td></tr></table>'+
+    '<div class="ctx" style="margin-top:6px">each needs ARM_ORDERS in its source <b>and</b> its marker file. '+
+    'the marker is re-checked every cycle, so deleting it disarms immediately.</div>';
+  R.push(card('execution state',ex,(sa||ea)?'alert':''));
+
+  // 2. BELIEF vs BROKER. A resting price in a state file is not an order.
+  let run='<table><tr><th>inst</th><th>proc</th><th class="n">resting</th><th class="n">position</th></tr>';
+  let phantom=0;
+  for(const sym of ['MNQ','MES','M2K','MYM']){
+    const isScalp=sym==='MNQ';
+    const pid=s.procs[isScalp?'scalp_MNQ':'nqq_'+sym];
+    const i=inst[sym]||{};
+    const armedHere=isScalp?sa:ea;
+    let rest='—';
+    if(i.resting){
+      rest=(i.resting.dir>0?'BID ':'OFFER ')+num(i.resting.ep,2);
+      // Armed + a saved candidate + no live order = the file is lying.
+      if(armedHere && !(s.broker&&s.broker.orders)) { rest+=' <span class="pill hot">phantom?</span>'; phantom++; }
     }
-  }catch(e){console.log('Gist fetch failed, trying local',e)}
-  if(!STATE_URL){
-    STATE_URL='shared_state.json';
-    console.log('Using local fallback');
+    const pos=i.position?((i.position.dir>0?'LONG ':'SHORT ')+i.position.remaining+'ct @ '+num(i.position.entry,2)+(i.position.trimmed?' (trailing)':'')):'—';
+    run+='<tr><td>'+sym+(isScalp?' <span class="pill">scalp</span>':'')+
+      (armedHere?' <span class="pill hot">live</span>':'')+'</td>'+
+      '<td class="'+(pid?'good':'bad')+'">'+(pid?pid:'down')+'</td>'+
+      '<td class="n cy">'+rest+'</td><td class="n">'+pos+'</td></tr>';
   }
-}
+  run+='</table>';
+  if(phantom)run+='<div class="bad" style="margin-top:6px">'+phantom+' resting price(s) with no confirmed broker order. '+
+    'sync_resting only submits when the edge CHANGES, so arming mid-flight can leave a saved candidate that was never sent.</div>';
+  R.push(card('runners // belief vs broker',run,phantom?'alert':''));
 
-function fmt$(v){if(v==null)return'$--';const n=parseFloat(v);return(n>=0?'+':'')+' $'+Math.abs(n).toFixed(2)}
-function fmtP(v){if(v==null)return'--';return parseFloat(v).toFixed(2)}
+  // 3. THE ONE SOCKET. Four runners read these files and open none.
+  //
+  //    A stale file still holds a plausible price, so the page used to show
+  //    four healthy-looking numbers while two symbols had been dead nine
+  //    hours. State is now explicit, and a CLOSED market is called closed
+  //    rather than counted as a fault -- otherwise every weekend reads as an
+  //    outage and you learn to ignore the panel.
+  const mdd=s.md||{}, closed=mdd._closed;
+  let md='<table><tr><th>sym</th><th class="n">last</th><th class="n">age</th><th>state</th></tr>';
+  let dead=0;
+  for(const k in mdd){
+    if(k==='_closed')continue;
+    const m=mdd[k];
+    const st=m.state||'?';
+    if(st==='NO DATA'||st==='no file'||st==='unreadable')dead++;
+    const cls=(st==='live')?'good':(st==='quiet')?'warn':(st==='closed')?'ctx':'bad';
+    md+='<tr><td>'+k+'</td><td class="n">'+num(m.price,2)+'</td>'+
+      '<td class="n ctx">'+age(m.age)+'</td><td class="'+cls+'">'+esc(st)+'</td></tr>';}
+  md+='</table>';
+  md+='<div class="ctx" style="margin-top:6px">'+
+    (closed?'<b class="cy">MARKET CLOSED</b> — quiet is expected; ages will keep climbing until the reopen. '
+           :'one md_writer socket serves all four. ')+
+    'NO DATA means this symbol is not receiving ticks while the market is open — '+
+    'usually it never subscribed, since the socket only sustains the first couple of chart subscriptions.</div>';
+  R.push(card('market data // single socket',md,(!closed&&dead)?'alert':''));
 
-function update(s){
-  // Price
-  const p=parseFloat(s.nq_price||s.last_price||0);
-  document.getElementById('price').textContent=p?p.toFixed(2):'--,---.--';
+  // 4. RISK LEDGER -- shared budget, the thing four independent processes
+  //    would otherwise each assume they owned in full.
+  const r=s.risk||{};
+  const used=Math.max(0,-(r.daily_pnl||0));
+  const pct=r.daily_budget?Math.min(100,100*used/r.daily_budget):0;
+  let risk='<div class="lbl">room to floor</div><div class="big '+((r.room||0)>1500?'':'bad')+'">'+money(r.room)+'</div>';
+  risk+='<div class="rule"></div><div class="lbl">daily budget used</div>';
+  risk+='<div class="mid '+sgn(r.daily_pnl)+'">'+money(r.daily_pnl)+' <span class="ctx">of '+money(-(r.daily_budget||0))+'</span></div>';
+  risk+='<div class="bar"><i class="'+(pct>70?'bad':'')+'" style="width:'+pct.toFixed(0)+'%"></i></div>';
+  risk+='<div class="rule"></div><div class="ctx">open '+Object.keys(r.open||{}).length+' of '+(r.max_open||'—')+' · max '+(r.max_same_side||'—')+' per side</div>';
+  if(r.halted)risk+='<div class="bad">HALTED: '+esc(r.halted)+'</div>';
+  R.push(card('portfolio risk // shared',risk,pct>70?'alert':''));
 
-  // Balance
-  const bal=parseFloat(s.balance||0);
-  document.getElementById('balance').textContent='$'+bal.toFixed(0);
+  // 5. EVALUATION
+  const e=s.eval||{};
+  const prog=s.target?Math.max(0,Math.min(100,100*(e.profit||0)/s.target)):0;
+  let ev='<div class="lbl">total profit</div><div class="big '+sgn(e.profit)+'">'+money(e.profit)+'</div>';
+  ev+='<div class="bar"><i class="'+((e.profit||0)>=0?'good':'bad')+'" style="width:'+prog.toFixed(0)+'%"></i></div>';
+  ev+='<div class="ctx">'+prog.toFixed(0)+'% of '+money(s.target)+' target</div><div class="rule"></div>';
+  ev+='<table><tr><td class="ctx">best day</td><td class="n">'+money(e.best_day)+'</td></tr>';
+  ev+='<tr><td class="ctx">consistency</td><td class="n">'+num(e.consistency_pct,1)+'% <span class="ctx">cap '+num(100*(s.consistency||0),0)+'%</span></td></tr>';
+  ev+='<tr><td class="ctx">mll floor</td><td class="n">'+money(e.floor)+'</td></tr></table>';
+  R.push(card('evaluation',ev));
 
-  // P&L
-  const dayPnl=parseFloat(s.day_pnl||s.daily_pnl||0);
-  const el=document.getElementById('dayPnl');
-  el.textContent=fmt$(dayPnl);
-  el.className='stat-value '+(dayPnl>=0?'':'negative');
+  // 6. HALTED ON PURPOSE -- distinct from crashed. Conflating the two is how
+  //    a dead bot goes unnoticed for a day.
+  const hal=s.halted||{};
+  let h=Object.keys(hal).length?'<table>':'<div class="ctx">nothing halted</div>';
+  for(const k in hal)h+='<tr><td class="warn">'+esc(k)+'</td><td class="ctx">'+esc(hal[k])+'</td></tr>';
+  if(Object.keys(hal).length)h+='</table>';
+  R.push(card('halted deliberately',h));
 
-  const realPnl=parseFloat(s.pnl||0);
-  const rp=document.getElementById('realPnl');
-  rp.textContent=fmt$(realPnl);
-  rp.className='stat-value '+(realPnl>=0?'':'negative');
-
-  const evalP=parseFloat(s.eval_total_profit||0);
-  document.getElementById('evalProfit').textContent=fmt$(evalP);
-  const pct=Math.min(100,Math.max(0,(evalP/TARGET)*100));
-  document.getElementById('targetPct').textContent=pct.toFixed(1)+'%';
-  document.getElementById('targetBar').style.width=pct+'%';
-
-  // Governor
-  document.getElementById('govMode').textContent=s.gov_mode||'--';
-  const floor=parseFloat(s.gov_floor||48000);
-  document.getElementById('govFloor').textContent='$'+floor.toFixed(0);
-  const cushion=bal-floor;
-  const ce=document.getElementById('govCushion');
-  ce.textContent='$'+cushion.toFixed(0);
-  ce.className='stat-value '+(cushion>500?'':'negative');
-  const ddUsed=((MAX_LOSS-cushion)/MAX_LOSS)*100;
-  document.getElementById('ddPct').textContent=Math.max(0,ddUsed).toFixed(0)+'%';
-  document.getElementById('ddBar').style.width=Math.max(0,Math.min(100,ddUsed))+'%';
-
-  document.getElementById('tradesToday').textContent=(s.daily_trade_count||0)+'/'+(s.max_daily_trades||5);
-  document.getElementById('tradingDays').textContent=s.trading_days||'0';
-
-  // Position
-  const ot=s.open_trade;
-  const dirEl=document.getElementById('posDir');
-  if(ot&&ot.direction){
-    const d=ot.direction.toLowerCase();
-    dirEl.textContent=(d==='buy'?'LONG':'SHORT')+' x'+(ot.qty||1);
-    dirEl.className='pos-direction '+d;
-    document.getElementById('posEntry').textContent=fmtP(ot.entry_price);
-    const lv=ot.levels||{};
-    document.getElementById('posSL').textContent=fmtP(lv.sl);
-    document.getElementById('posTP').textContent=fmtP(lv.tp2);
-    const unreal=parseFloat(s.unrealized_pnl||0);
-    const ue=document.getElementById('posUnreal');
-    ue.textContent=fmt$(unreal);
-    ue.style.color=unreal>=0?'var(--green)':'var(--red)';
-  }else{
-    dirEl.textContent='FLAT';dirEl.className='pos-direction flat';
-    ['posEntry','posSL','posTP'].forEach(id=>document.getElementById(id).textContent='--');
-    document.getElementById('posUnreal').textContent='--';
-  }
-
-  // Signals
-  document.getElementById('ictScore').textContent=s.ict_score||0;
-  document.getElementById('setupType').textContent=s.setup_type||'--';
-  document.getElementById('confidence').textContent=(s.confidence||0)+'%';
-  document.getElementById('vwapBias').textContent=(s.vwap_bias||'--').toUpperCase();
-  document.getElementById('killzone').textContent=s.session||'--';
-  document.getElementById('atr').textContent=fmtP(s.atr_shrunk);
-
-  // Market
-  document.getElementById('vwap').textContent=fmtP(s.vwap);
-  document.getElementById('regime').textContent=s.regime||'--';
-  document.getElementById('ofi').textContent=s.ofi||'--';
-  document.getElementById('llmModel').textContent=s.llm_model||'DeepSeek V3';
-  document.getElementById('lastAction').textContent=(s.last_action||'--').substring(0,40);
-
-  // Feed status
-  const age=s.bot_last_update?(Date.now()/1000-s.bot_last_update):999;
-  const alive=age<120;
-  document.getElementById('feedStatus').textContent=alive?'LIVE':'STALE';
-  document.getElementById('feedStatus').style.color=alive?'var(--green)':'var(--red)';
-  document.getElementById('pulse').className=alive?'pulse':'pulse dead';
-  document.getElementById('lastUpdate').textContent='Updated '+new Date(s.bot_last_update*1000).toLocaleTimeString();
-
-  // Trades
-  const trades=s.trades||[];
-  const tb=document.getElementById('tradeBody');
-  tb.innerHTML='';
-  trades.slice(-15).reverse().forEach(t=>{
-    const pnl=parseFloat(t.pnl||0);
-    const cls=pnl>=0?'win':'loss';
-    tb.innerHTML+=`<tr><td>${t.time||'--'}</td><td>${(t.direction||'--').toUpperCase()}</td><td>${fmtP(t.entry)}</td><td>${fmtP(t.exit)}</td><td class="${cls}">${fmt$(pnl)}</td><td>${(t.reason||'').substring(0,25)}</td></tr>`;
-  });
-}
-
-function tick(){
-  document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false,timeZone:'America/New_York'})+' ET';
-}
-
-async function poll(){
-  if(!STATE_URL)return;
-  try{
-    const r=await fetch(STATE_URL+'?t='+Date.now());
-    if(r.ok){const d=await r.json();update(d);}
-  }catch(e){
-    if(_tunnelResolved){
-      document.getElementById('feedStatus').textContent='DISCONNECTED';
-      document.getElementById('feedStatus').style.color='var(--red)';
+  // 7. TAPE. Shadow and live rows share one csv, so live rows are marked and
+  //    simulated rows are dimmed. Reading one as the other is the easiest
+  //    mistake on this screen.
+  const tp=s.tape||[];
+  let tape='';
+  if(!tp.length)tape='<div class="ctx">no trades recorded</div>';
+  else{
+    const liveN=tp.filter(t=>t.armed).length;
+    tape='<div class="ctx">'+tp.length+' recent · <span class="'+(liveN?'bad':'ctx')+'">'+liveN+' live</span> · '+(tp.length-liveN)+' simulated</div>';
+    tape+=spark(tp.slice().reverse().map(t=>t.ticks));
+    tape+='<div class="tape"><table><tr><th>time</th><th>sym</th><th>exit</th><th class="n">ticks</th><th class="n">p&amp;l</th></tr>';
+    for(const t of tp){
+      tape+='<tr class="'+(t.armed?'':'dim')+'"><td>'+esc(t.ts)+'</td>'+
+        '<td>'+esc(t.sym)+(t.armed?' <span class="pill hot">live</span>':'')+'</td>'+
+        '<td class="ctx">'+esc(t.why)+'</td>'+
+        '<td class="n '+sgn(t.ticks)+'">'+num(t.ticks,1)+'</td>'+
+        '<td class="n '+sgn(t.pnl)+'">'+money(t.pnl)+'</td></tr>';
     }
+    tape+='</table></div>';
   }
-}
+  R.push(card('trade tape // live vs simulated',tape,'wide'));
 
-async function init(){
-  await resolveTunnel();
-  setInterval(tick,1000);tick();
-  setInterval(poll,REFRESH_MS);poll();
-  // Re-check tunnel URL every 5 minutes in case it changed
-  setInterval(resolveTunnel,300000);
+  document.getElementById('root').innerHTML=R.join('');
+  document.getElementById('clock').textContent=s.ts;
+  document.getElementById('foot').textContent=
+    Object.keys(s.procs||{}).length+' processes · read-only view · '+
+    ((sa||ea)?'ARMED — orders are real':'shadow — no orders');
 }
-init();
-</script>
-</body>
-</html>
+async function tick(){try{const r=await fetch('/api/state');render(await r.json());}catch(e){}}
+tick();setInterval(tick,4000);
+</script><script>window.__SNAPSHOT__ = {"ts": "19:48:28", "procs": {"mnq_bot": 6400, "nqq_MES": 6772, "nqq_M2K": 17200, "manager": 23404, "md_writer": 10120}, "proc_names": ["mnq_bot", "mes_bot", "mnq_feed", "mes_feed", "manager", "dashboard", "nqq_MES", "nqq_M2K", "md_writer"], "halted": {"mnq_bot": "Syndicate HALTED 2026-09-03.", "mes_bot": "Halted 2026-09-03."}, "shadow": {"armed": true, "engine_armed": true, "scalper_armed": false, "instruments": {}}, "risk": {"equity": null, "room": null, "daily_pnl": 0.0, "daily_budget": 900.0, "open": {}, "max_open": 3, "max_same_side": 3, "halted": null}, "md": {"_closed": false, "MNQU6": {"age": 150165.69166183472, "price": 29509.25, "state": "NO DATA"}, "MESU6": {"age": 0.563800573348999, "price": 7653.5, "state": "live"}, "M2KU6": {"age": 6.031645059585571, "price": 2925.8, "state": "live"}, "MYMU6": {"age": 220600.91200065613, "price": 53204.0, "state": "NO DATA"}}, "feed": {"MES": {"tick_age": 4.366319179534912, "reconnects": 0, "rate_limited": false, "errors": []}, "M2K": {"tick_age": 6.001800537109375, "reconnects": 0, "rate_limited": false, "errors": []}}, "eval": {"total": 4588.0, "best": 2244.0, "ratio": 48.91020052310375, "floor": 50100.0, "locked": true, "need": 5610.0, "to_target": 10712.0, "target": 15300.0, "days": {"2026-08-05": 2228.0, "2026-08-06": -67.5, "2026-08-07": -243.75, "2026-08-09": 1107.0, "2026-08-10": -790.75, "2026-08-11": -220.5, "2026-08-12": -2731.0, "2026-08-13": -348.5, "2026-08-17": 2244.0, "2026-08-18": -665.5, "2026-08-19": -192.75, "2026-08-20": -1939.5, "2026-08-21": -207.5, "2026-08-24": -519.5, "2026-08-25": 128.0, "2026-08-26": -313.0, "2026-08-27": -1579.0, "2026-08-28": -178.0, "2026-07-28": -313.0, "2026-08-03": 53.75, "2026-08-14": -1059.5, "2026-08-16": 193.5, "2026-08-23": -63.25, "2026-09-01": 0.0, "2026-09-02": -612.5, "2026-09-03": -135.5}, "contributors": {"mnq": "2026-08-31T15:29:31", "mes": "2026-08-31T15:29:33", "MNQU6": "2026-09-02T20:39:24", "MESU6": "2026-09-03T13:29:46", "correction": "2026-08-31T20:41:34", "verify": "2026-08-31T20:42:27", "restart_sync": "2026-09-01T09:25:19", "post_restart": "2026-09-01T09:32:51"}}, "manager": {"ts": 1789008412.014144, "time": "2026-09-09 19:46:52", "uptime_min": 373.8557416041692, "cycles": 243, "cooldown_secs": 0, "md_clients": 1, "recording": {"db_age": 4.61091947555542, "coverage": 100.0, "rows_5m": 677, "status": "OK"}, "components": {"mnq_bot": {"label": "MNQ trading bot", "running": false, "pids": [], "uptime_min": null, "md": true, "md_state": "up", "tick_age": 0, "log_age": 0.0, "state_age": 58674.48305821419, "position": false, "restarts": 0, "status": "HALTED", "notes": ["halted by HALT_mnq_bot marker"]}, "mes_bot": {"label": "MES trading bot", "running": false, "pids": [], "uptime_min": null, "md": true, "md_state": "up", "tick_age": 0, "log_age": 21106.554499, "state_age": 58678.55449914932, "position": false, "restarts": 0, "status": "HALTED", "notes": ["halted by HALT_mes_bot marker"]}, "ssw_mnq": {"label": "TradingView feed writer (MNQ)", "running": false, "pids": [], "uptime_min": null, "md": false, "md_state": null, "tick_age": null, "log_age": null, "state_age": 58678.63170981407, "position": null, "restarts": 0, "status": "WARN", "notes": ["process not running"]}, "ssw_mes": {"label": "TradingView feed writer (MES)", "running": false, "pids": [], "uptime_min": null, "md": false, "md_state": null, "tick_age": null, "log_age": null, "state_age": 58682.70963764191, "position": null, "restarts": 0, "status": "WARN", "notes": ["process not running"]}, "syndicate_shadow": {"label": "Syndicate SHADOW (no orders)", "running": false, "pids": [], "uptime_min": null, "md": false, "md_state": null, "tick_age": null, "log_age": null, "state_age": null, "position": null, "restarts": 0, "status": "WARN", "notes": ["process not running"]}, "dashboard": {"label": "Ops dashboard :8787", "running": false, "pids": [], "uptime_min": null, "md": false, "md_state": null, "tick_age": null, "log_age": null, "state_age": null, "position": null, "restarts": 0, "status": "WARN", "notes": ["process not running"]}, "md_writer": {"label": "Unified MD writer (the one socket)", "running": true, "pids": [10120, 20364], "uptime_min": 283.7486161073049, "md": true, "md_state": "unknown", "tick_age": null, "log_age": 42.925865, "state_age": 0.9185771942138672, "position": false, "restarts": 0, "status": "OK", "notes": []}, "nqq_mes": {"label": "nq-quant FVG runner MES (ARMED)", "running": true, "pids": [6772, 14308], "uptime_min": 394.15487299760184, "md": false, "md_state": "down", "tick_age": 0, "log_age": 1.007395, "state_age": 0.9938812255859375, "position": false, "restarts": 0, "status": "OK", "notes": ["on the shared file feed by design"]}, "nqq_m2k": {"label": "nq-quant FVG runner M2K (ARMED)", "running": true, "pids": [17200, 17840], "uptime_min": 394.1218149145444, "md": false, "md_state": "down", "tick_age": 0, "log_age": 13.083631, "state_age": 7.0730085372924805, "position": false, "restarts": 0, "status": "OK", "notes": ["on the shared file feed by design"]}}, "actions": ["mnq_bot: down (--no-start)", "mes_bot: down (--no-start)", "ssw_mnq: down (--no-start)", "ssw_mes: down (--no-start)", "syndicate_shadow: down (--no-start)", "dashboard: down (--no-start)"], "alerts": [], "age": 98.66154742240906}, "decision": {"MES": {"id": 41456, "ts_ms": 1788467386353, "symbol": "MESU6", "session": "2026-09-03", "action": "hold", "reason": "+1.50sd \u2014 band not stretched (2.0 needed)", "confidence": 0, "price": 7750.25, "vwap": 7705.681475762541, "ext_ticks": 178.27409694983726, "atr_ticks": 0.0, "adx": 0.0, "bias": "neutral", "sl_price": 0.0, "tp1_price": 0.0, "entry_order_type": "market", "engine": "band"}, "M2K": null}, "holds": {"MES": [{"g": "ADX gate", "n": 3618}, {"g": "no setup (outside entry band)", "n": 1682}, {"g": "05h ET outside (20, 1, 2) (BAD hours m", "n": 371}, {"g": "11h ET outside (20, 1, 2) (BAD hours m", "n": 301}, {"g": "06h ET outside (20, 1, 2) (BAD hours m", "n": 246}, {"g": "10h ET outside (20, 1, 2) (BAD hours m", "n": 216}, {"g": "+0.61sd \u2014 band not stretched (2.0 need", "n": 202}], "M2K": []}, "counts": {"MES": {"total": 23252, "act": 21}, "M2K": {"total": 0, "act": 0}}, "limits": {"MES": {"n": 14, "f": 11, "w": 0.0, "adv": 1.5454545454545454}, "M2K": {"n": 0, "f": null, "w": null, "adv": null}}, "trades": {"MES": [{"id": 19, "symbol": "MESU6", "session": "2026-08-28", "time": "07:06:10", "exit_time": "2026-08-28T07:17:48", "side": "buy", "entry": 7739.5, "exit": 7739.75, "qty": 14, "reason": "BRACKET FILLED", "pts": 0.25, "pnl": -868.0, "dist_ticks": null, "sl_ticks": null, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": null, "arm": "live"}, {"id": 18, "symbol": "MESU6", "session": "2026-08-28", "time": "23:49:52", "exit_time": "2026-08-28T06:41:02", "side": "sell", "entry": 7740.5, "exit": 7755.5, "qty": 10, "reason": "BRACKET FILLED", "pts": -15.0, "pnl": 187.5, "dist_ticks": null, "sl_ticks": null, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": null, "arm": "live"}, {"id": 13, "symbol": "MESU6", "session": "2026-08-27", "time": "04:13:06", "exit_time": "2026-08-27T05:44:39", "side": "sell", "entry": 7727.5, "exit": 7718.5, "qty": 10, "reason": "RECON FLAT", "pts": 9.0, "pnl": 745.0, "dist_ticks": null, "sl_ticks": 24.0, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": "unknown", "arm": "live"}, {"id": 12, "symbol": "MESU6", "session": "2026-08-27", "time": "02:46:14", "exit_time": "2026-08-27T04:12:49", "side": "sell", "entry": 7727.5, "exit": 7722.0, "qty": 10, "reason": "RECON FLAT", "pts": 5.5, "pnl": -5.0, "dist_ticks": null, "sl_ticks": null, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": null, "arm": "live"}, {"id": 11, "symbol": "MESU6", "session": "2026-08-27", "time": "00:37:19", "exit_time": "2026-08-27T01:29:53", "side": "buy", "entry": 7719.25, "exit": 7728.25, "qty": 6, "reason": "BRACKET FILLED", "pts": 9.0, "pnl": 444.0, "dist_ticks": null, "sl_ticks": null, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": null, "arm": "live"}, {"id": 10, "symbol": "MESU6", "session": "2026-08-27", "time": "21:21:51", "exit_time": "2026-08-26T21:40:04", "side": "buy", "entry": 7726.0, "exit": 7720.25, "qty": 10, "reason": "BRACKET FILLED", "pts": -5.75, "pnl": -297.5, "dist_ticks": null, "sl_ticks": null, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": null, "arm": "live"}, {"id": 8, "symbol": "MESU6", "session": "2026-08-27", "time": "20:17:33", "exit_time": "2026-08-26T20:30:46", "side": "buy", "entry": 7727.25, "exit": 7729.0, "qty": 10, "reason": "BRACKET FILLED", "pts": 1.75, "pnl": 77.5, "dist_ticks": null, "sl_ticks": null, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": null, "arm": "live"}, {"id": 7, "symbol": "MESU6", "session": "2026-08-27", "time": "18:00:04", "exit_time": "2026-08-26T20:14:43", "side": "sell", "entry": 7725.0, "exit": 7726.25, "qty": 10, "reason": "BRACKET FILLED", "pts": -1.25, "pnl": -395.0, "dist_ticks": null, "sl_ticks": 24.0, "hold_s": null, "mae_ticks": null, "mfe_ticks": null, "entry_order_type": "unknown", "arm": "live"}], "M2K": []}, "pnl": [{"session": "2026-09-03", "symbol": "MNQU6", "n": 5, "p": -170.5, "w": 0}, {"session": "2026-09-01", "symbol": "MNQU6", "n": 2, "p": -446.0, "w": 0}, {"session": "2026-08-28", "symbol": "MESU6", "n": 2, "p": -732.5, "w": 1}, {"session": "2026-08-28", "symbol": "MNQU6", "n": 3, "p": -1027.5, "w": 0}, {"session": "2026-08-27", "symbol": "MESU6", "n": 6, "p": 732.5, "w": 4}, {"session": "2026-08-27", "symbol": "MNQU6", "n": 4, "p": 1311.5, "w": 4}, {"session": "2026-08-26", "symbol": "MNQU6", "n": 4, "p": 176.0, "w": 3}], "tape": [{"ts": "17:27:06", "sym": "MNQ", "dir": 1, "why": "timeout", "ticks": -1.0, "pnl": -1.5, "bars": "30", "armed": false}, {"ts": "17:27:06", "sym": "MNQ", "dir": 1, "why": "timeout", "ticks": -1.0, "pnl": -1.5, "bars": "30", "armed": false}, {"ts": "16:57:18", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "18", "armed": false}, {"ts": "16:57:18", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "18", "armed": false}, {"ts": "16:39:13", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "5", "armed": false}, {"ts": "16:39:13", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "5", "armed": false}, {"ts": "16:34:10", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "7", "armed": false}, {"ts": "16:34:10", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "7", "armed": false}, {"ts": "16:25:05", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "16:25:05", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "16:15:02", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "4", "armed": false}, {"ts": "16:15:02", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "4", "armed": false}, {"ts": "16:06:19", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "5", "armed": false}, {"ts": "16:06:19", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "5", "armed": false}, {"ts": "16:01:16", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "16:01:16", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "15:52:13", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "8", "armed": false}, {"ts": "15:52:13", "sym": "MNQ", "dir": 1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "8", "armed": false}, {"ts": "15:42:10", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "5", "armed": false}, {"ts": "15:42:10", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "5", "armed": false}, {"ts": "15:37:08", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "15:37:08", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "15:32:05", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "1", "armed": false}, {"ts": "15:32:05", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "1", "armed": false}, {"ts": "15:25:02", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "13", "armed": false}, {"ts": "15:25:02", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "13", "armed": false}, {"ts": "15:10:16", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "7", "armed": false}, {"ts": "15:10:16", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "7", "armed": false}, {"ts": "14:59:12", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "7", "armed": false}, {"ts": "08:13:16", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "2", "armed": false}, {"ts": "08:13:16", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "2", "armed": false}, {"ts": "07:53:08", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "07:53:08", "sym": "MNQ", "dir": -1, "why": "target", "ticks": 24.0, "pnl": 36.0, "bars": "3", "armed": false}, {"ts": "07:35:01", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "2", "armed": false}, {"ts": "07:35:01", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "2", "armed": false}, {"ts": "07:25:17", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "1", "armed": false}, {"ts": "07:25:17", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "1", "armed": false}, {"ts": "07:21:14", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "1", "armed": false}, {"ts": "07:21:14", "sym": "MNQ", "dir": -1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "1", "armed": false}, {"ts": "07:20:13", "sym": "MNQ", "dir": 1, "why": "stop", "ticks": -36.0, "pnl": -54.0, "bars": "4", "armed": false}], "target": 15300.0, "consistency": 0.4, "generated": "2026-09-09 19:48:30", "logs": {"MNQ": "00:56:15  MNQ          appended 1 live bar(s), latest 2026-09-08 07:56:00\n00:56:19  MNQ  BAR     09-08 07:56   3 zones  flat                                          3.7s\n00:57:19  MNQ          appended 1 live bar(s), latest 2026-09-08 07:57:00\n00:57:22  MNQ  BAR     09-08 07:57   3 zones  flat                                          3.7s\n00:58:22  MNQ          appended 1 live bar(s), latest 2026-09-08 07:58:00\n00:58:27  MNQ  BAR     09-08 07:58   3 zones  flat                                          4.0s\n00:59:27  MNQ          appended 1 live bar(s), latest 2026-09-08 07:59:00\n00:59:31  MNQ  BAR     09-08 07:59   3 zones  flat                                          3.9s\n01:00:01  MNQ          appended 1 live bar(s), latest 2026-09-08 08:00:00\n01:00:04  MNQ  BAR     09-08 08:00   3 zones  flat                                          3.7s\n01:01:04  MNQ          appended 1 live bar(s), latest 2026-09-08 08:01:00\n01:01:08  MNQ  BAR     09-08 08:01   3 zones  flat                                          3.9s\n01:02:08  MNQ          appended 1 live bar(s), latest 2026-09-08 08:02:00\n01:02:13  MNQ  BAR     09-08 08:02   3 zones  flat                                          4.7s\n01:03:13  MNQ          appended 1 live bar(s), latest 2026-09-08 08:03:00\n01:03:17  MNQ  BAR     09-08 08:03   3 zones  flat                                          4.1s\n01:04:17  MNQ          appended 1 live bar(s), latest 2026-09-08 08:04:00\n01:04:22  MNQ  BAR     09-08 08:04   3 zones  flat                                          4.3s\n01:05:22  MNQ          appended 1 live bar(s), latest 2026-09-08 08:05:00\n01:05:26  MNQ  BAR     09-08 08:05   3 zones  flat                                          3.8s\n01:06:26  MNQ          appended 1 live bar(s), latest 2026-09-08 08:06:00\n01:06:30  MNQ  BAR     09-08 08:06   3 zones  flat                                          4.3s\n01:07:00  MNQ          appended 1 live bar(s), latest 2026-09-08 08:07:00\n01:07:04  MNQ  BAR     09-08 08:07   3 zones  flat                                          4.0s\n01:08:04  MNQ          appended 1 live bar(s), latest 2026-09-08 08:08:00\n01:08:09  MNQ  BAR     09-08 08:08   3 zones  flat                                          4.6s\n01:09:09  MNQ          appended 1 live bar(s), latest 2026-09-08 08:09:00\n01:09:13  MNQ  BAR     09-08 08:09   3 zones  flat                                          4.2s\n01:10:13  MNQ          appended 1 live bar(s), latest 2026-09-08 08:10:00\n01:10:18  MNQ  BAR     09-08 08:10   3 zones  flat                                          4.1s\n01:11:18  MNQ          appended 1 live bar(s), latest 2026-09-08 08:11:00\n01:11:22  MNQ  BAR     09-08 08:11   3 zones  flat                                          4.0s\n01:12:22  MNQ          appended 1 live bar(s), latest 2026-09-08 08:12:00\n01:12:26  MNQ  BAR     09-08 08:12   3 zones  flat                                          3.9s\n01:13:26  MNQ          appended 1 live bar(s), latest 2026-09-08 08:13:00\n01:13:30  MNQ  BAR     09-08 08:13   3 zones  flat                                          4.2s\n01:14:00  MNQ          appended 1 live bar(s), latest 2026-09-08 08:14:00\n01:14:05  MNQ  BAR     09-08 08:14   3 zones  flat                                          4.3s\n01:15:05  MNQ          appended 1 live bar(s), latest 2026-09-08 08:15:00\n01:15:09  MNQ  BAR     09-08 08:15   3 zones  flat                                          4.4s\n01:16:09  MNQ          appended 1 live bar(s), latest 2026-09-08 08:16:00\n01:16:15  MNQ  BAR     09-08 08:16   3 zones  flat                                          5.0s\n01:17:15  MNQ          appended 1 live bar(s), latest 2026-09-08 08:17:00\n01:17:19  MNQ  BAR     09-08 08:17   3 zones  flat                                          4.2s\n01:18:19  MNQ          appended 1 live bar(s), latest 2026-09-08 08:18:00\n01:18:24  MNQ  BAR     09-08 08:18   3 zones  flat                                          4.6s\n01:19:24  MNQ          appended 1 live bar(s), latest 2026-09-08 08:19:00\n01:19:28  MNQ  BAR     09-08 08:19   3 zones  flat                                          4.0s\n01:20:28  MNQ          appended 1 live bar(s), latest 2026-09-08 08:20:00\n01:20:32  MNQ  BAR     09-08 08:20   3 zones  flat                                          4.0s\n01:21:02  MNQ          appended 1 live bar(s), latest 2026-09-08 08:21:00\n01:21:07  MNQ  BAR     09-08 08:21   3 zones  flat                                          4.3s\n01:22:07  MNQ          appended 1 live bar(s), latest 2026-09-08 08:22:00\n01:22:11  MNQ  BAR     09-08 08:22   3 zones  flat                                          3.9s\n01:23:11  MNQ          appended 1 live bar(s), latest 2026-09-08 08:23:00\n01:23:15  MNQ  BAR     09-08 08:23   3 zones  flat                                          4.0s\n01:24:15  MNQ          appended 1 live bar(s), latest 2026-09-08 08:24:00\n01:24:19  MNQ  BAR     09-08 08:24   3 zones  flat                                          3.5s\n01:25:19  MNQ          appended 1 live bar(s), latest 2026-09-08 08:25:00\n01:25:23  MNQ  BAR     09-08 08:25   3 zones  flat                                          4.5s\n01:26:23  MNQ          appended 1 live bar(s), latest 2026-09-08 08:26:00\n01:26:27  MNQ  BAR     09-08 08:26   3 zones  flat                                          4.3s\n01:27:28  MNQ          appended 1 live bar(s), latest 2026-09-08 08:27:00\n01:27:32  MNQ  BAR     09-08 08:27   3 zones  flat                                          4.2s\n01:28:02  MNQ          appended 1 live bar(s), latest 2026-09-08 08:28:00\n01:28:06  MNQ  BAR     09-08 08:28   3 zones  flat                                          4.3s\n01:29:06  MNQ          appended 1 live bar(s), latest 2026-09-08 08:29:00\n01:29:11  MNQ  BAR     09-08 08:29   3 zones  flat                                          4.2s\n01:30:11  MNQ          appended 1 live bar(s), latest 2026-09-08 08:30:00\n01:30:14  MNQ  BAR     09-08 08:30   3 zones  flat                                          3.4s\n01:31:14  MNQ          appended 1 live bar(s), latest 2026-09-08 08:31:00\n01:31:17  MNQ  BAR     09-08 08:31   3 zones  flat                                          3.2s\n01:32:17  MNQ          appended 1 live bar(s), latest 2026-09-08 08:32:00\n01:32:21  MNQ  BAR     09-08 08:32   3 zones  flat                                          3.5s\n01:33:21  MNQ          appended 1 live bar(s), latest 2026-09-08 08:33:00\n01:33:24  MNQ  BAR     09-08 08:33   3 zones  flat                                          3.4s\n01:34:25  MNQ          appended 1 live bar(s), latest 2026-09-08 08:34:00\n01:34:28  MNQ  BAR     09-08 08:34   3 zones  flat                                          3.5s\n01:35:28  MNQ          appended 1 live bar(s), latest 2026-09-08 08:35:00\n01:35:32  MNQ  BAR     09-08 08:35   3 zones  flat                                          3.4s\n01:36:02  MNQ          appended 1 live bar(s), latest 2026-09-08 08:36:00\n01:36:05  MNQ  BAR     09-08 08:36   3 zones  flat                                          3.5s\n01:37:05  MNQ          appended 1 live bar(s), latest 2026-09-08 08:37:00\n01:37:08  MNQ  BAR     09-08 08:37   3 zones  flat                                          3.1s\n01:38:08  MNQ          appended 1 live bar(s), latest 2026-09-08 08:38:00\n01:38:11  MNQ  BAR     09-08 08:38   3 zones  flat                                          2.8s\n01:39:11  MNQ          appended 1 live bar(s), latest 2026-09-08 08:39:00\n01:39:14  MNQ  BAR     09-08 08:39   3 zones  flat                                          2.2s\n01:40:14  MNQ          appended 1 live bar(s), latest 2026-09-08 08:40:00\n01:40:17  MNQ  BAR     09-08 08:40   3 zones  flat                                          3.1s\n01:41:17  MNQ          appended 1 live bar(s), latest 2026-09-08 08:41:00\n01:41:19  MNQ  BAR     09-08 08:41   3 zones  flat                                          2.2s\n01:42:19  MNQ          appended 1 live bar(s), latest 2026-09-08 08:42:00\n01:42:23  MNQ  BAR     09-08 08:42   3 zones  flat                                          3.7s\n01:43:23  MNQ          appended 1 live bar(s), latest 2026-09-08 08:43:00\n01:43:26  MNQ  BAR     09-08 08:43   3 zones  flat                                          3.2s\n01:44:26  MNQ          appended 1 live bar(s), latest 2026-09-08 08:44:00\n01:44:30  MNQ  BAR     09-08 08:44   3 zones  flat                                          3.7s\n01:46:30  MNQ          appended 1 live bar(s), latest 2026-09-08 08:46:00\n01:46:34  MNQ  BAR     09-08 08:46   3 zones  flat                                          3.5s\n01:47:04  MNQ          appended 1 live bar(s), latest 2026-09-08 08:47:00\n01:47:07  MNQ  BAR     09-08 08:47   3 zones  flat                                          3.5s\n01:48:37  MNQ          appended 1 live bar(s), latest 2026-09-08 08:48:00\n01:48:41  MNQ  BAR     09-08 08:48   3 zones  flat                                          3.3s\n01:49:11  MNQ          appended 1 live bar(s), latest 2026-09-08 08:49:00\n01:49:14  MNQ  BAR     09-08 08:49   3 zones  flat                                          3.0s\n01:50:14  MNQ          appended 1 live bar(s), latest 2026-09-08 08:50:00\n01:50:17  MNQ  BAR     09-08 08:50   3 zones  flat                                          3.2s\n01:51:17  MNQ          appended 1 live bar(s), latest 2026-09-08 08:51:00\n01:51:21  MNQ  BAR     09-08 08:51   3 zones  flat                                          3.2s\n01:54:21  MNQ          appended 1 live bar(s), latest 2026-09-08 08:54:00\n01:54:25  MNQ  BAR     09-08 08:54   3 zones  flat                                          3.9s\n01:55:25  MNQ          appended 1 live bar(s), latest 2026-09-08 08:55:00\n01:55:27  MNQ  BAR     09-08 08:55   3 zones  flat                                          2.2s\n02:04:57  MNQ          appended 1 live bar(s), latest 2026-09-08 09:04:00\n02:05:02  MNQ  BAR     09-08 09:04   3 zones  flat                                          4.7s\n02:05:32  MNQ          appended 1 live bar(s), latest 2026-09-08 09:05:00\n02:05:35  MNQ  BAR     09-08 09:05   3 zones  flat                                          3.3s\n02:06:05  MNQ          appended 1 live bar(s), latest 2026-09-08 09:06:00\n02:06:09  MNQ  BAR     09-08 09:06   3 zones  flat                                          3.4s", "MES": "19:08:36 [STREAM] 234 ticks/60s (3.9/s) | price=7651.0 | source=file | tick_age=0s\n19:09:24  MES          appended 1 live bar(s), latest 2026-09-10 02:09:00\n19:09:26  MES  BAR     09-10 02:09   0 zones  flat                                          2.0s\n19:09:36 [STREAM] 235 ticks/60s (3.9/s) | price=7651.25 | source=file | tick_age=0s\n19:10:27  MES          appended 1 live bar(s), latest 2026-09-10 02:10:00\n19:10:29  MES  BAR     09-10 02:10   0 zones  flat                                          2.0s\n19:10:36 [STREAM] 234 ticks/60s (3.9/s) | price=7650.25 | source=file | tick_age=0s\n19:11:30  MES          appended 1 live bar(s), latest 2026-09-10 02:11:00\n19:11:32  MES  BAR     09-10 02:11   0 zones  flat                                          2.1s\n19:11:36 [STREAM] 233 ticks/60s (3.9/s) | price=7648.75 | source=file | tick_age=0s\n19:12:02  MES          appended 1 live bar(s), latest 2026-09-10 02:12:00\n19:12:04  MES  BAR     09-10 02:12   0 zones  flat                                          2.1s\n19:12:36 [STREAM] 233 ticks/60s (3.9/s) | price=7649.0 | source=file | tick_age=0s\n19:13:05  MES          appended 1 live bar(s), latest 2026-09-10 02:13:00\n19:13:07  MES  BAR     09-10 02:13   0 zones  flat                                          2.1s\n19:13:36 [STREAM] 235 ticks/60s (3.9/s) | price=7649.5 | source=file | tick_age=0s\n19:14:08  MES          appended 1 live bar(s), latest 2026-09-10 02:14:00\n19:14:10  MES  BAR     09-10 02:14   0 zones  flat                                          2.3s\n19:14:36 [STREAM] 234 ticks/60s (3.9/s) | price=7651.0 | source=file | tick_age=0s\n19:15:11  MES          appended 1 live bar(s), latest 2026-09-10 02:15:00\n19:15:13  MES  BAR     09-10 02:15   0 zones  flat                                          2.1s\n19:15:36 [STREAM] 234 ticks/60s (3.9/s) | price=7651.0 | source=file | tick_age=0s\n19:16:14  MES          appended 1 live bar(s), latest 2026-09-10 02:16:00\n19:16:16  MES  BAR     09-10 02:16   0 zones  flat                                          2.5s\n19:16:36 [STREAM] 234 ticks/60s (3.9/s) | price=7649.75 | source=file | tick_age=0s\n19:17:17  MES          appended 1 live bar(s), latest 2026-09-10 02:17:00\n19:17:19  MES  BAR     09-10 02:17   0 zones  flat                                          2.4s\n19:17:36 [STREAM] 234 ticks/60s (3.9/s) | price=7648.75 | source=file | tick_age=0s\n19:18:20  MES          appended 1 live bar(s), latest 2026-09-10 02:18:00\n19:18:22  MES  BAR     09-10 02:18   0 zones  flat                                          2.1s\n19:18:36 [STREAM] 235 ticks/60s (3.9/s) | price=7649.0 | source=file | tick_age=0s\n19:19:23  MES          appended 1 live bar(s), latest 2026-09-10 02:19:00\n19:19:26  MES  BAR     09-10 02:19   0 zones  flat                                          3.0s\n19:19:36 [STREAM] 234 ticks/60s (3.9/s) | price=7648.75 | source=file | tick_age=0s\n19:20:27  MES          appended 1 live bar(s), latest 2026-09-10 02:20:00\n19:20:29  MES  BAR     09-10 02:20   0 zones  flat                                          2.6s\n19:20:36 [STREAM] 234 ticks/60s (3.9/s) | price=7650.0 | source=file | tick_age=0s\n19:21:30  MES          appended 1 live bar(s), latest 2026-09-10 02:21:00\n19:21:33  MES  BAR     09-10 02:21   0 zones  flat                                          2.6s\n19:21:37 [STREAM] 234 ticks/60s (3.9/s) | price=7650.0 | source=file | tick_age=0s\n19:22:03  MES          appended 1 live bar(s), latest 2026-09-10 02:22:00\n19:22:05  MES  BAR     09-10 02:22   0 zones  flat                                          2.1s\n19:22:37 [STREAM] 235 ticks/60s (3.9/s) | price=7649.75 | source=file | tick_age=0s\n19:23:06  MES          appended 1 live bar(s), latest 2026-09-10 02:23:00\n19:23:08  MES  BAR     09-10 02:23   0 zones  flat                                          2.2s\n19:23:37 [STREAM] 235 ticks/60s (3.9/s) | price=7650.25 | source=file | tick_age=0s\n19:24:09  MES          appended 1 live bar(s), latest 2026-09-10 02:24:00\n19:24:11  MES  BAR     09-10 02:24   0 zones  flat                                          2.6s\n19:24:37 [STREAM] 235 ticks/60s (3.9/s) | price=7650.0 | source=file | tick_age=0s\n19:25:12  MES          appended 1 live bar(s), latest 2026-09-10 02:25:00\n19:25:14  MES  BAR     09-10 02:25   0 zones  flat                                          2.2s\n19:25:37 [STREAM] 235 ticks/60s (3.9/s) | price=7649.75 | source=file | tick_age=0s\n19:26:16  MES          appended 1 live bar(s), latest 2026-09-10 02:26:00\n19:26:18  MES  BAR     09-10 02:26   0 zones  flat                                          2.1s\n19:26:37 [STREAM] 235 ticks/60s (3.9/s) | price=7649.0 | source=file | tick_age=0s\n19:27:19  MES          appended 1 live bar(s), latest 2026-09-10 02:27:00\n19:27:21  MES  BAR     09-10 02:27   0 zones  flat                                          2.1s\n19:27:37 [STREAM] 234 ticks/60s (3.9/s) | price=7649.25 | source=file | tick_age=0s\n19:28:22  MES          appended 1 live bar(s), latest 2026-09-10 02:28:00\n19:28:24  MES  BAR     09-10 02:28   0 zones  flat                                          2.2s\n19:28:37 [STREAM] 235 ticks/60s (3.9/s) | price=7649.75 | source=file | tick_age=0s\n19:29:24  MES          appended 1 live bar(s), latest 2026-09-10 02:29:00\n19:29:27  MES  BAR     09-10 02:29   0 zones  flat                                          2.2s\n19:29:37 [STREAM] 235 ticks/60s (3.9/s) | price=7649.0 | source=file | tick_age=0s\n19:30:27  MES          appended 1 live bar(s), latest 2026-09-10 02:30:00\n19:30:30  MES  BAR     09-10 02:30   0 zones  flat                                          2.2s\n19:30:37 [STREAM] 235 ticks/60s (3.9/s) | price=7650.0 | source=file | tick_age=0s\n19:31:00  MES          appended 1 live bar(s), latest 2026-09-10 02:31:00\n19:31:02  MES  BAR     09-10 02:31   0 zones  flat                                          2.1s\n19:31:37 [STREAM] 234 ticks/60s (3.9/s) | price=7649.75 | source=file | tick_age=0s\n19:32:03  MES          appended 1 live bar(s), latest 2026-09-10 02:32:00\n19:32:05  MES  BAR     09-10 02:32   0 zones  flat                                          2.1s\n19:32:37 [STREAM] 234 ticks/60s (3.9/s) | price=7650.25 | source=file | tick_age=0s\n19:33:05  MES          appended 1 live bar(s), latest 2026-09-10 02:33:00\n19:33:08  MES  BAR     09-10 02:33   0 zones  flat                                          2.5s\n19:33:37 [STREAM] 235 ticks/60s (3.9/s) | price=7650.0 | source=file | tick_age=0s\n19:34:09  MES          appended 1 live bar(s), latest 2026-09-10 02:34:00\n19:34:11  MES  BAR     09-10 02:34   0 zones  flat                                          2.1s\n19:34:37 [STREAM] 235 ticks/60s (3.9/s) | price=7651.0 | source=file | tick_age=0s\n19:35:11  MES          appended 1 live bar(s), latest 2026-09-10 02:35:00\n19:35:14  MES  BAR     09-10 02:35   0 zones  flat                                          2.1s\n19:35:37 [STREAM] 234 ticks/60s (3.9/s) | price=7652.0 | source=file | tick_age=0s\n19:36:14  MES          appended 1 live bar(s), latest 2026-09-10 02:36:00\n19:36:17  MES  BAR     09-10 02:36   0 zones  flat                                          2.5s\n19:36:37 [STREAM] 233 ticks/60s (3.9/s) | price=7651.75 | source=file | tick_age=0s\n19:37:17  MES          appended 1 live bar(s), latest 2026-09-10 02:37:00\n19:37:19  MES  BAR     09-10 02:37   0 zones  flat                                          2.0s\n19:37:37 [STREAM] 235 ticks/60s (3.9/s) | price=7652.0 | source=file | tick_age=0s\n19:38:20  MES          appended 1 live bar(s), latest 2026-09-10 02:38:00\n19:38:22  MES  BAR     09-10 02:38   0 zones  flat                                          2.0s\n19:38:37 [STREAM] 235 ticks/60s (3.9/s) | price=7652.5 | source=file | tick_age=0s\n19:39:23  MES          appended 1 live bar(s), latest 2026-09-10 02:39:00\n19:39:25  MES  BAR     09-10 02:39   0 zones  flat                                          2.5s\n19:39:37 [STREAM] 232 ticks/60s (3.9/s) | price=7654.25 | source=file | tick_age=0s\n19:40:26  MES          appended 1 live bar(s), latest 2026-09-10 02:40:00\n19:40:28  MES  BAR     09-10 02:40   0 zones  flat                                          2.2s\n19:40:37 [STREAM] 235 ticks/60s (3.9/s) | price=7653.75 | source=file | tick_age=0s\n19:41:29  MES          appended 1 live bar(s), latest 2026-09-10 02:41:00\n19:41:31  MES  BAR     09-10 02:41   0 zones  flat                                          2.1s\n19:41:37 [STREAM] 234 ticks/60s (3.9/s) | price=7654.0 | source=file | tick_age=0s\n19:42:02  MES          appended 1 live bar(s), latest 2026-09-10 02:42:00\n19:42:04  MES  BAR     09-10 02:42   0 zones  flat                                          2.2s\n19:42:37 [STREAM] 234 ticks/60s (3.9/s) | price=7654.5 | source=file | tick_age=0s\n19:43:04  MES          appended 1 live bar(s), latest 2026-09-10 02:43:00\n19:43:07  MES  BAR     09-10 02:43   0 zones  flat                                          2.1s\n19:43:37 [STREAM] 234 ticks/60s (3.9/s) | price=7655.25 | source=file | tick_age=0s\n19:44:07  MES          appended 1 live bar(s), latest 2026-09-10 02:44:00\n19:44:09  MES  BAR     09-10 02:44   0 zones  flat                                          2.2s\n19:44:37 [STREAM] 233 ticks/60s (3.9/s) | price=7654.5 | source=file | tick_age=0s\n19:45:10  MES          appended 1 live bar(s), latest 2026-09-10 02:45:00\n19:45:12  MES  BAR     09-10 02:45   0 zones  flat                                          2.1s\n19:45:37 [STREAM] 235 ticks/60s (3.9/s) | price=7654.5 | source=file | tick_age=0s\n19:46:13  MES          appended 1 live bar(s), latest 2026-09-10 02:46:00\n19:46:15  MES  BAR     09-10 02:46   0 zones  flat                                          2.1s\n19:46:37 [STREAM] 235 ticks/60s (3.9/s) | price=7654.25 | source=file | tick_age=0s\n19:47:16  MES          appended 1 live bar(s), latest 2026-09-10 02:47:00\n19:47:18  MES  BAR     09-10 02:47   0 zones  flat                                          2.1s\n19:47:37 [STREAM] 234 ticks/60s (3.9/s) | price=7654.0 | source=file | tick_age=0s\n19:48:19  MES          appended 1 live bar(s), latest 2026-09-10 02:48:00\n19:48:21  MES  BAR     09-10 02:48   0 zones  flat                                          2.3s", "M2K": "19:07:05 [STREAM] 201 ticks/60s (3.4/s) | price=2925.2 | source=file | tick_age=0s\n19:07:11  M2K          appended 1 live bar(s), latest 2026-09-10 02:07:00\n19:07:13  M2K  BAR     09-10 02:07   0 zones  flat                                          1.3s\n19:08:05 [STREAM] 236 ticks/60s (3.9/s) | price=2925.2 | source=file | tick_age=0s\n19:08:14  M2K          appended 1 live bar(s), latest 2026-09-10 02:08:00\n19:08:16  M2K  BAR     09-10 02:08   0 zones  flat                                          1.4s\n19:09:05 [STREAM] 195 ticks/60s (3.2/s) | price=2925.0 | source=file | tick_age=0s\n19:09:17  M2K          appended 1 live bar(s), latest 2026-09-10 02:09:00\n19:09:18  M2K  BAR     09-10 02:09   0 zones  flat                                          1.2s\n19:10:05 [STREAM] 235 ticks/60s (3.9/s) | price=2924.8 | source=file | tick_age=0s\n19:10:19  M2K          appended 1 live bar(s), latest 2026-09-10 02:10:00\n19:10:20  M2K  BAR     09-10 02:10   0 zones  flat                                          1.2s\n19:11:05 [STREAM] 236 ticks/60s (3.9/s) | price=2924.5 | source=file | tick_age=0s\n19:11:21  M2K          appended 1 live bar(s), latest 2026-09-10 02:11:00\n19:11:22  M2K  BAR     09-10 02:11   0 zones  flat                                          1.4s\n19:12:05 [STREAM] 235 ticks/60s (3.9/s) | price=2924.4 | source=file | tick_age=0s\n19:12:23  M2K          appended 1 live bar(s), latest 2026-09-10 02:12:00\n19:12:24  M2K  BAR     09-10 02:12   0 zones  flat                                          1.3s\n19:13:05 [STREAM] 174 ticks/60s (2.9/s) | price=2924.5 | source=file | tick_age=0s\n19:13:25  M2K          appended 1 live bar(s), latest 2026-09-10 02:13:00\n19:13:26  M2K  BAR     09-10 02:13   0 zones  flat                                          1.3s\n19:14:05 [STREAM] 185 ticks/60s (3.1/s) | price=2924.6 | source=file | tick_age=0s\n19:14:27  M2K          appended 1 live bar(s), latest 2026-09-10 02:14:00\n19:14:28  M2K  BAR     09-10 02:14   0 zones  flat                                          1.5s\n19:15:05 [STREAM] 208 ticks/60s (3.5/s) | price=2924.9 | source=file | tick_age=0s\n19:15:29  M2K          appended 1 live bar(s), latest 2026-09-10 02:15:00\n19:15:30  M2K  BAR     09-10 02:15   0 zones  flat                                          1.3s\n19:16:01  M2K          appended 1 live bar(s), latest 2026-09-10 02:16:00\n19:16:02  M2K  BAR     09-10 02:16   0 zones  flat                                          1.5s\n19:16:05 [STREAM] 181 ticks/60s (3.0/s) | price=2924.8 | source=file | tick_age=0s\n19:17:03  M2K          appended 1 live bar(s), latest 2026-09-10 02:17:00\n19:17:04  M2K  BAR     09-10 02:17   0 zones  flat                                          1.6s\n19:17:05 [STREAM] 235 ticks/60s (3.9/s) | price=2924.1 | source=file | tick_age=0s\n19:18:05 [STREAM] 110 ticks/60s (1.8/s) | price=2924.1 | source=file | tick_age=32s\n19:19:05 [STREAM] 0 ticks/60s (0.0/s) | price=2924.1 | source=file | tick_age=92s\n19:19:36  M2K          appended 1 live bar(s), latest 2026-09-10 02:19:00\n19:19:37  M2K  BAR     09-10 02:19   0 zones  flat                                          1.2s\n19:20:05 [STREAM] 164 ticks/60s (2.7/s) | price=2924.5 | source=file | tick_age=0s\n19:20:08  M2K          appended 1 live bar(s), latest 2026-09-10 02:20:00\n19:20:09  M2K  BAR     09-10 02:20   0 zones  flat                                          1.3s\n19:21:05 [STREAM] 195 ticks/60s (3.2/s) | price=2925.1 | source=file | tick_age=0s\n19:21:10  M2K          appended 1 live bar(s), latest 2026-09-10 02:21:00\n19:21:12  M2K  BAR     09-10 02:21   0 zones  flat                                          1.7s\n19:22:05 [STREAM] 148 ticks/60s (2.5/s) | price=2924.9 | source=file | tick_age=0s\n19:22:12  M2K          appended 1 live bar(s), latest 2026-09-10 02:22:00\n19:22:14  M2K  BAR     09-10 02:22   0 zones  flat                                          1.3s\n19:23:05 [STREAM] 237 ticks/60s (4.0/s) | price=2924.6 | source=file | tick_age=0s\n19:23:14  M2K          appended 1 live bar(s), latest 2026-09-10 02:23:00\n19:23:16  M2K  BAR     09-10 02:23   0 zones  flat                                          1.3s\n19:24:05 [STREAM] 66 ticks/60s (1.1/s) | price=2924.6 | source=file | tick_age=43s\n19:24:16  M2K          appended 1 live bar(s), latest 2026-09-10 02:24:00\n19:24:18  M2K  BAR     09-10 02:24   0 zones  flat                                          1.3s\n19:25:06 [STREAM] 118 ticks/60s (2.0/s) | price=2924.6 | source=file | tick_age=30s\n19:26:06 [STREAM] 33 ticks/60s (0.6/s) | price=2924.3 | source=file | tick_age=0s\n19:26:19  M2K          appended 2 live bar(s), latest 2026-09-10 02:26:00\n19:26:20  M2K  BAR     09-10 02:26   0 zones  flat                                          1.3s\n19:27:06 [STREAM] 231 ticks/60s (3.9/s) | price=2924.1 | source=file | tick_age=0s\n19:27:21  M2K          appended 1 live bar(s), latest 2026-09-10 02:27:00\n19:27:22  M2K  BAR     09-10 02:27   0 zones  flat                                          1.3s\n19:28:06 [STREAM] 107 ticks/60s (1.8/s) | price=2924.3 | source=file | tick_age=0s\n19:28:23  M2K          appended 1 live bar(s), latest 2026-09-10 02:28:00\n19:28:24  M2K  BAR     09-10 02:28   0 zones  flat                                          1.3s\n19:29:06 [STREAM] 163 ticks/60s (2.7/s) | price=2924.5 | source=file | tick_age=19s\n19:29:55  M2K          appended 1 live bar(s), latest 2026-09-10 02:29:00\n19:29:57  M2K  BAR     09-10 02:29   0 zones  flat                                          1.3s\n19:30:06 [STREAM] 69 ticks/60s (1.1/s) | price=2924.2 | source=file | tick_age=0s\n19:30:27  M2K          appended 1 live bar(s), latest 2026-09-10 02:30:00\n19:30:29  M2K  BAR     09-10 02:30   0 zones  flat                                          1.6s\n19:31:06 [STREAM] 236 ticks/60s (3.9/s) | price=2924.5 | source=file | tick_age=0s\n19:31:29  M2K          appended 1 live bar(s), latest 2026-09-10 02:31:00\n19:31:31  M2K  BAR     09-10 02:31   0 zones  flat                                          1.4s\n19:32:01  M2K          appended 1 live bar(s), latest 2026-09-10 02:32:00\n19:32:03  M2K  BAR     09-10 02:32   0 zones  flat                                          1.8s\n19:32:06 [STREAM] 198 ticks/60s (3.3/s) | price=2924.3 | source=file | tick_age=0s\n19:33:04  M2K          appended 1 live bar(s), latest 2026-09-10 02:33:00\n19:33:05  M2K  BAR     09-10 02:33   0 zones  flat                                          1.3s\n19:33:06 [STREAM] 236 ticks/60s (3.9/s) | price=2924.5 | source=file | tick_age=0s\n19:34:06  M2K          appended 1 live bar(s), latest 2026-09-10 02:34:00\n19:34:06 [STREAM] 168 ticks/60s (2.8/s) | price=2924.3 | source=file | tick_age=1s\n19:34:07  M2K  BAR     09-10 02:34   0 zones  flat                                          1.4s\n19:35:06 [STREAM] 53 ticks/60s (0.9/s) | price=2925.0 | source=file | tick_age=0s\n19:35:08  M2K          appended 1 live bar(s), latest 2026-09-10 02:35:00\n19:35:09  M2K  BAR     09-10 02:35   0 zones  flat                                          1.3s\n19:36:06 [STREAM] 235 ticks/60s (3.9/s) | price=2925.2 | source=file | tick_age=0s\n19:36:10  M2K          appended 1 live bar(s), latest 2026-09-10 02:36:00\n19:36:11  M2K  BAR     09-10 02:36   0 zones  flat                                          1.3s\n19:37:06 [STREAM] 236 ticks/60s (3.9/s) | price=2925.0 | source=file | tick_age=0s\n19:37:12  M2K          appended 1 live bar(s), latest 2026-09-10 02:37:00\n19:37:13  M2K  BAR     09-10 02:37   0 zones  flat                                          1.2s\n19:38:06 [STREAM] 235 ticks/60s (3.9/s) | price=2925.2 | source=file | tick_age=0s\n19:38:14  M2K          appended 1 live bar(s), latest 2026-09-10 02:38:00\n19:38:15  M2K  BAR     09-10 02:38   0 zones  flat                                          1.3s\n19:39:06 [STREAM] 236 ticks/60s (3.9/s) | price=2925.5 | source=file | tick_age=0s\n19:39:16  M2K          appended 1 live bar(s), latest 2026-09-10 02:39:00\n19:39:17  M2K  BAR     09-10 02:39   0 zones  flat                                          1.3s\n19:40:06 [STREAM] 235 ticks/60s (3.9/s) | price=2925.9 | source=file | tick_age=0s\n19:40:18  M2K          appended 1 live bar(s), latest 2026-09-10 02:40:00\n19:40:19  M2K  BAR     09-10 02:40   0 zones  flat                                          1.3s\n19:41:06 [STREAM] 229 ticks/60s (3.8/s) | price=2926.3 | source=file | tick_age=0s\n19:41:20  M2K          appended 1 live bar(s), latest 2026-09-10 02:41:00\n19:41:21  M2K  BAR     09-10 02:41   0 zones  flat                                          1.3s\n19:42:06 [STREAM] 236 ticks/60s (3.9/s) | price=2926.1 | source=file | tick_age=0s\n19:42:22  M2K          appended 1 live bar(s), latest 2026-09-10 02:42:00\n19:42:23  M2K  BAR     09-10 02:42   0 zones  flat                                          1.5s\n19:43:06 [STREAM] 236 ticks/60s (3.9/s) | price=2926.5 | source=file | tick_age=0s\n19:43:24  M2K          appended 1 live bar(s), latest 2026-09-10 02:43:00\n19:43:25  M2K  BAR     09-10 02:43   0 zones  flat                                          1.3s\n19:44:06 [STREAM] 194 ticks/60s (3.2/s) | price=2926.7 | source=file | tick_age=0s\n19:44:26  M2K          appended 1 live bar(s), latest 2026-09-10 02:44:00\n19:44:27  M2K  BAR     09-10 02:44   0 zones  flat                                          1.2s\n19:45:06 [STREAM] 219 ticks/60s (3.6/s) | price=2926.2 | source=file | tick_age=0s\n19:45:28  M2K          appended 1 live bar(s), latest 2026-09-10 02:45:00\n19:45:30  M2K  BAR     09-10 02:45   0 zones  flat                                          1.5s\n19:46:00  M2K          appended 1 live bar(s), latest 2026-09-10 02:46:00\n19:46:01  M2K  BAR     09-10 02:46   0 zones  flat                                          1.3s\n19:46:06 [STREAM] 209 ticks/60s (3.5/s) | price=2926.1 | source=file | tick_age=0s\n19:47:02  M2K          appended 1 live bar(s), latest 2026-09-10 02:47:00\n19:47:03  M2K  BAR     09-10 02:47   0 zones  flat                                          1.5s\n19:47:06 [STREAM] 235 ticks/60s (3.9/s) | price=2926.1 | source=file | tick_age=0s\n19:48:06 [STREAM] 133 ticks/60s (2.2/s) | price=2926.1 | source=file | tick_age=27s"}};</script>
+</body></html>
